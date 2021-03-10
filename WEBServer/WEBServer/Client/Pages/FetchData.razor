@@ -1,0 +1,46 @@
+﻿@page "/fetchdata"
+@using WEBServer.Shared
+@inject HttpClient Http
+
+<h1>Rilevazioni</h1>
+
+<p>In questa pagina è possibile consultare tutte le rilevazioni.</p>
+
+@if (flows == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Persone rilevate</th>
+                <th>Ultimo aggiornamento</th>
+                <th>Info</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var flow in flows)
+            {
+                <tr>
+                    <td>@flow.Name</td>
+                    <td>@flow.PeopleNumber</td>
+                    <td>@flow.LastUpdate</td>
+                    <td>@flow.Info</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private FlowData[] flows;
+
+    protected override async Task OnInitializedAsync()
+    {
+        flows = await Http.GetFromJsonAsync<FlowData[]>("FlowData");
+    }
+
+}
