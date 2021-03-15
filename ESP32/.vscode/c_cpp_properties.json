@@ -3,6 +3,7 @@
         {
             "name": "Mac",
             "includePath": [
+                "/Users/brd/Documents/Arduino/libraries/ArduinoJson/src",
                 "/Users/brd/Library/Arduino15/packages/esp32/tools/**",
                 "/Users/brd/Documents/Arduino/libraries/**",
                 "/Applications/Arduino.app/Contents/Java/libraries/**",

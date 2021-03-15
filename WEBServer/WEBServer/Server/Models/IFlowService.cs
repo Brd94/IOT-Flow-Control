@@ -6,6 +6,6 @@ namespace WEBServer.Server.Models
 {
     public interface IFlowService
     {
-        IEnumerable<FlowData> getAllData();
+        IEnumerable<FlowData> getFlowData();
     }
 }

@@ -1,105 +1,111 @@
 ﻿using System;
+using System.Text.Json;
 using System.Threading.Tasks;
-using MQTTnet;
-using MQTTnet.Client.Options;
-using MQTTnet.Client.Receiving;
-using MQTTnet.Protocol;
-using MQTTnet.Server;
+
 
 namespace MQTTServer
 {
     class Program
     {
 
-
-
+        public static string UID = "Brd";
+        public static string PWD = "Errata";
+        public static int Port = 1883;
         static SQLiteConnector connector;
 
         static void Main(string[] args)
         {
             connector = new SQLiteConnector("/Users/brd/Desktop/Work/Uni/Tesi/IOT-Flow-Control/Shared/Data.db");
-            connector.Connect().Wait();
-            StartServer("Brd", "Errata", 1883);
 
-        }
+            var broker = new MQTTBroker();
+            broker.StartServer(UID, PWD, Port);
 
-        public static void StartServer(string UID, string PWD, int Port)
-        {
-            var optionsBuilder = new MqttServerOptionsBuilder()
-                .WithConnectionBacklog(100)
-                .WithDefaultEndpointPort(Port)
-                .WithConnectionValidator(c =>
-                {
-                    if (c.Username != UID)
-                    {
-                        c.ReasonCode = MqttConnectReasonCode.BadUserNameOrPassword;
-                        return;
-                    }
+            var client = new MQTTClient();
+            client.StartClient(UID, PWD, "MASTER");
 
-                    if (c.Password != PWD)
-                    {
-                        c.ReasonCode = MqttConnectReasonCode.BadUserNameOrPassword;
-                        return;
-                    }
+            var dBServices = new DBServices(connector);
 
-                    c.ReasonCode = MqttConnectReasonCode.Success;
+            var actionprovider = new MQTTActionProvider()
+                        .AddEndpointAction("/esp/get_id_location", endpointdata =>
+                        {
+                            var device = dBServices.getDevice(endpointdata.Msg.ID);
 
-                    //Dopo aver validato il Client,Registro la connessione
+                            if (device.Registered_Location.HasValue)
+                                endpointdata.ReturnValue = new { ID_Location = device.Registered_Location };
+                            else
+                                endpointdata.ReturnValue = new { ID_Location = -2 };
 
-                    var task = connector.ScalarQuery($"SELECT COUNT(*) FROM Data WHERE ID='{c.ClientId}'");
-                    task.Wait();
-                    var res = task.Result;
+                        })
+                        .AddEndpointAction("/esp/get_anagra", endpointdata =>
+                        {
+                            var device = dBServices.getDevice(endpointdata.Msg.ID);
 
-                    if((long)res >0){
-                        Console.WriteLine("Bentornato {0}!",c.ClientId);
-                    }else{
-                        connector.Query($"INSERT INTO Data(ID,Last_Seen) Values('{c.ClientId}','{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}') ").Wait();;
-                        Console.WriteLine("Benvenuto {0}!",c.ClientId);
-                    }
-                });
-              
+                            if (device.Registered_Location.HasValue)
+                            {
+                                var anagra = dBServices.getLocationInfo(device.Registered_Location.Value);
+                                endpointdata.ReturnValue = anagra;
+                            }
+                        })
+                        .AddEndpointAction("/esp/put_delta", endpointdata =>
+                        {
+                            var device = dBServices.getDevice(endpointdata.Msg.ID);
 
-            var factory = new MqttFactory();
-            var server = factory.CreateMqttServer();
-            server.UseApplicationMessageReceivedHandler(x => OnReceive(x));
-            server.StartAsync(optionsBuilder.Build()).Wait();
+                            if (device.Registered_Location.HasValue)
+                                dBServices.increaseDelta(device.Registered_Location.Value, int.Parse(endpointdata.Msg.Payload));
+
+                        });
+
+            broker.OnSubscribe += sub => dBServices.RegisterDevice(sub);
+
+            broker.OnReceive += x =>
+            {
+
+                string response = actionprovider.Run(x);
+
+                if (response != null)
+                    client.SendMessage("brokr/" + x.ID + "/jsondata", response);
+
+            };
+
+            //     broker.ClientSubscribed += sub =>
+            //    {
+
+            //        var device = dBServices.getDevice(sub.ID);
+
+            //        if (device.Registered_Location.HasValue)
+            //        {
+            //            var location = dBServices.getLocationInfo(device.Registered_Location.Value);
+
+            //            string serialize = JsonSerializer.Serialize(new
+            //            {
+            //                ID_Location = device.Registered_Location.Value,
+            //                People_Count = location.People_Count,
+            //                Business_Name = location.Business_Name,
+            //                Address = location.Address,
+            //                PostalCode = location.PostalCode,
+            //                City = location.City
+            //            };
+            //        }
+            //        else
+            //        {
+            //            string serialize = JsonSerializer.Serialize(new
+            //            {
+            //                ID_Location = -2
+            //            });
+            //        }
+
+
+            //    };
+
 
             Console.WriteLine("Server in ascolto sulla porta {0},premere un INVIO per uscire...", Port);
             Console.ReadLine();
 
-            server.StopAsync().Wait();
         }
 
-        private static async void OnReceive(MqttApplicationMessageReceivedEventArgs x)
-        {           
-            string topic = x.ApplicationMessage.Topic;
-            string content = x.ApplicationMessage.ConvertPayloadToString();
-            
-            Console.WriteLine("{0} Messaggio sul topic {1} da {2} : '{3}' ",DateTime.Now,topic, x.ClientId, content);
 
-            string subTopic = topic.Substring(4);
 
-            switch(subTopic){
-                case "anagra_pcount":
-                    string SQL = $"UPDATE Data SET P_Count = {content},Last_Seen = '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' WHERE ID = '{x.ClientId}'";
-                  await connector.Query(SQL);
-                break;
-            }
-            
-            //informo ascoltatori di un avvenuto aggiornamento
-        }
 
-        // public static void StartClient(string UID, string PWD, string Topic)
-        // {
-        //     var optionsBuilder = new MqttClientOptionsBuilder()
-        //     .WithCredentials(UID, PWD)
-        //     .WithClientId(LISTENER_PREFIX + "_" + Topic);
-
-        //     var factory = new MqttFactory();
-        //     var client = factory.CreateMqttClient();
-
-        //     client.SubscribeAsync(optionsBuilder.Build(), new System.Threading.CancellationToken());
-        // }
 
     }
 

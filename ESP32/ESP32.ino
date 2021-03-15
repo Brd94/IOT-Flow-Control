@@ -1,5 +1,6 @@
 /// https://github.com/knolleary/pubsubclient/archive/master.zip ricorda di controlla anche qua
 #include <SPI.h>
+#include <ArduinoJson.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <Wire.h>
@@ -57,11 +58,14 @@ void setup()
 
   preferences.begin("EEPROM", false);
 
-  anagra.address = preferences.getString("anagra_address");
-  anagra.business_name = preferences.getString("anagra_bname");
-  anagra.pcount = preferences.getInt("anagra_pcount");
-  anagra.pc = preferences.getString("anagra_pc", anagra.pc);
-  anagra.city = preferences.getString("anagra_city", anagra.city);
+  anagra.id = -1;
+  //anagra.address = preferences.getString("anagra_address");
+  //anagra.business_name = NULL;
+  //anagra.pcount = 0;
+  anagra.not_synced_delta = preferences.getInt("not_synced_delta", 0);
+  anagra.pcount_server = -1;
+  //anagra.pc = preferences.getString("anagra_pc", anagra.pc);
+  //anagra.city = preferences.getString("anagra_city", anagra.city);
 
   String saved_ssid = preferences.getString("SSID");
   String saved_wpwd = preferences.getString("WPWD");
@@ -87,6 +91,8 @@ void setup()
 
   //setup_wifi();
   client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
+
   //EEPROM.begin(4096);
   //EEPROM.get(0, anagra); //Carico da memoria
 
@@ -99,7 +105,6 @@ void setup()
   pinMode(0, INPUT_PULLUP);
 
   delay(700);
-  //client.setCallback(callback);
 }
 
 void handle_onConnect()
@@ -116,31 +121,32 @@ void handle_onConnect()
     case 1:
       anagra.business_name = server.arg(i);
       Serial.println("SET BNAME");
-      preferences.putString("anagra_bname", anagra.business_name);
+      //preferences.putString("anagra_bname", anagra.business_name);
       break;
 
     case 2:
-      anagra.pcount = server.arg(i).toInt();
-      Serial.println("SET PPL");
-      preferences.putInt("anagra_pcount", anagra.pcount);
+      //anagra.pcount = anagra.pcount + server.arg(i).toInt();
+      anagra.not_synced_delta = anagra.not_synced_delta + server.arg(i).toInt();
+      Serial.println("SET PPL " + anagra.not_synced_delta);
+      preferences.putInt("not_synced_delta", anagra.not_synced_delta);
       break;
 
     case 3:
       anagra.address = server.arg(i);
       Serial.println("SET ADDR");
-      preferences.putString("anagra_address", anagra.address);
+      //preferences.putString("anagra_address", anagra.address);
       break;
 
     case 4:
       anagra.pc = server.arg(i);
       Serial.println("SET PC");
-      preferences.putString("anagra_pc", anagra.pc);
+      //preferences.putString("anagra_pc", anagra.pc);
       break;
 
     case 5:
       anagra.city = server.arg(i);
       Serial.println("SET CITY");
-      preferences.putString("anagra_city", anagra.city);
+      //preferences.putString("anagra_city", anagra.city);
       break;
 
     default:
@@ -181,30 +187,26 @@ void handle_onConnect()
 
 void callback(char *topic, byte *message, unsigned int length)
 {
-  Serial.print("Message arrived on topic: ");
+  Serial.println("Message arrived on topic: ");
   Serial.print(topic);
-  Serial.print(". Message: ");
   String messageTemp;
 
   for (int i = 0; i < length; i++)
   {
-    Serial.print((char)message[i]);
     messageTemp += (char)message[i];
   }
-  Serial.println();
 
-  if (String(topic) == "esp32/output")
-  {
-    Serial.print("Changing output to ");
-    if (messageTemp == "on")
-    {
-      Serial.println("on");
-    }
-    else if (messageTemp == "off")
-    {
-      Serial.println("off");
-    }
-  }
+  Serial.print(" message ");
+  Serial.print(messageTemp);
+  // Serial.print(". Message: ");
+
+  // Serial.println();
+
+  // if (String(topic) == "brokr/" + String(WiFi.macAddress()) + "/anagra_id")
+  //   anagra.id = messageTemp.toInt();
+
+  // if (String(topic) == "brokr/" + String(WiFi.macAddress()) + "/anagra_pcount")
+  //   anagra.pcount_server = messageTemp.toInt();
 }
 
 void reconnect()
@@ -213,11 +215,16 @@ void reconnect()
   {
     Serial.print("Attempting MQTT connection...");
     if (client.connect(WiFi.macAddress().c_str(), "Brd", "Errata"))
+    //if (client.connect("4c:32:75:91:0d:7f", "Brd", "Errata"))
     {
       Serial.println("connected");
 
-      // Subscribe
-      //client.subscribe("esp32/output"); //pe l'input
+      // Subscribe      brokr/4c:32:75:91:0d:7f/
+      //client.subscribe(("brokr/" + String(WiFi.macAddress()) + "/anagra_id").c_str());     //per l'input
+      //client.subscribe(("brokr/" + String(WiFi.macAddress()) + "/anagra_pcount").c_str()); //per l'input
+      client.subscribe(("brokr/" + String(WiFi.macAddress()) + "/#").c_str());
+      //Serial.print(subscribed);
+      //client.subscribe("brokr/upd"); //per l'input
 
       //client.subscribe("esp32/localeTest/");
     }
@@ -268,15 +275,15 @@ void loop()
   {
     u8g2.drawStr(3, 25, "Rset Pers.2',Wifi 8'");
 
-    if (now - lastRSTPress > 2000)
-    {
-      anagra.pcount = 0;
-      preferences.putInt("anagra_pcount", anagra.pcount);
-      u8g2.drawStr(3, 25, "Reset Persone...OK");
-      delay(2000);
+    // if (now - lastRSTPress > 2000)
+    // {
+    //   anagra.pcount = 0;
+    //   preferences.putInt("anagra_pcount", anagra.pcount);
+    //   u8g2.drawStr(3, 25, "Reset Persone...OK");
+    //   delay(2000);
 
-      //Cancello SSID E PWD
-    }
+    //   //Cancello SSID E PWD
+    // }
 
     if (now - lastRSTPress > 8000)
     {
@@ -290,10 +297,19 @@ void loop()
   {
     lastRSTPress = now;
 
-    char str[20];
-    sprintf(str, "Persone : %d", anagra.pcount);
-    u8g2.drawStr(3, 25, str);
+    char strsync[20];
+    if (anagra.not_synced_delta > 0)
+      sprintf(strsync, "Da sincronizz. : %d", anagra.not_synced_delta);
+    u8g2.drawStr(3, 35, strsync);
   }
+
+  char str[20];
+  if (anagra.pcount_server >= 0)
+    sprintf(str, "Persone : %d", anagra.pcount_server);
+  else
+    sprintf(str, "Non disp. (%d)", anagra.pcount_server);
+
+  u8g2.drawStr(3, 25, str);
 
   if (WiFi.status() != WL_CONNECTED)
   {
@@ -360,35 +376,53 @@ void loop()
     if (now - lastMsg > 1000)
     {
       lastMsg = now;
-     
-     if(MQTTSyncPending)
-      MQTTSyncPending = !UpdateAnagra(&anagra);
-    }
 
-    
+      if (MQTTSyncPending)
+        MQTTSyncPending = !UpdateAnagra();
+    }
   }
 
   u8g2.sendBuffer();
 }
 
-bool UpdateAnagra(anag *anagra_to_publish)
+bool UpdateAnagra()
 {
   bool published = true;
- 
-  published = published && client.publish("esp/anagra_bname", String(anagra_to_publish->business_name).c_str());
-  published = published && client.publish("esp/anagra_address", String(anagra_to_publish->address).c_str());
-  published = published && client.publish( "esp/anagra_pc", String(anagra_to_publish->pc).c_str());
-  published = published && client.publish("esp/anagra_city", String(anagra_to_publish->city).c_str());
+
+  Serial.println("Published : ");
+
+  // published = published && client.publish("esp/local_people_delta", String(anagra.not_synced_delta).c_str());
+  // published = published && client.publish("esp/anagra_bname", String(anagra.business_name).c_str());
+  // published = published && client.publish("esp/anagra_address", String(anagra.address).c_str());
+  // published = published && client.publish("esp/anagra_pc", String(anagra.pc).c_str());
+  // published = published && client.publish("esp/anagra_city", String(anagra.city).c_str());
+
+  DynamicJsonDocument doc(1024);
+
+  doc["not_synced_delta"] = anagra.not_synced_delta;
+  doc["business_name"] = anagra.business_name;
+  doc["address"] = anagra.address;
+
+  String serialized;
+  serializeJson(doc, serialized);
+
+
+  published = published && client.publish("esp/jsondata",serialized.c_str());
+
+  Serial.print(published);
+
+  if (published)
+    anagra.not_synced_delta = 0;
 
   return published;
 }
 
-bool UpdatePCount(int old_pcount,int new_pcount)
+bool UpdatePCount(int old_pcount, int new_pcount)
 {
   bool published = true;
 
-  published = published && client.publish("esp/anagra_pcount_delta", String(new_pcount-old_pcount).c_str());
-  
+  published = published && client.publish("esp/anagra_pcount_delta", String(new_pcount - old_pcount).c_str());
+
   return published;
 }
 
@@ -418,7 +452,7 @@ String SendHTML()
   ptr += "' style=\"width:50px\"></label>";
   ptr += "<label>Citta : <input name=\"5\" value='" + anagra.city;
   ptr += "'></label>";
-  ptr += "<p><h2 style=\"margin-top:30px\">Persone : <input type=\"number\" name=\"2\" value='" + String(anagra.pcount);
+  ptr += "<p><h2 style=\"margin-top:30px\">Aggiungi/Togli Persone : <input type=\"number\" name=\"2\" value='" + String(0);
   ptr += "'style=\"font-size: 30px;text-align:center;width:100px\"></h2>";
   ptr += "<p><button class=button style=\"margin-top:50px\">Salva</button></form>";
   ptr += "</body>\n";

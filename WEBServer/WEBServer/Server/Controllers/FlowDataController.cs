@@ -28,7 +28,7 @@ namespace WEBServer.Server.Controllers
         public IEnumerable<FlowData> Get()
         {
 
-            return flowservice.getAllData();
+            return flowservice.getFlowData();
         }
     }
 }

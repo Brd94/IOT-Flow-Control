@@ -15,7 +15,7 @@ namespace WEBServer.Server.Models
             this.db = db;
         }
 
-        public IEnumerable<FlowData> getAllData()
+        public IEnumerable<FlowData> getFlowData()
         {
             string SQL = "SELECT * FROM Data";
             DataSet data = db.Query(SQL);
