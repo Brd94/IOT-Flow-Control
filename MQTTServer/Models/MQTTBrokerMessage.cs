@@ -1,6 +1,6 @@
 namespace MQTTServer.Models
 {
-    public struct MQTTBrokerMessage
+    public class MQTTBrokerMessage
     {
         public string ID;
         public string Topic;

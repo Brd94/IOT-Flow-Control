@@ -30,7 +30,10 @@ namespace MQTTServer
             {
                 ID_Location = dr.Field<long>("ID_Location"),
                 Business_Name = dr.Field<string>("Business_Name"),
-                People_Count = dr.Field<long>("People_Count") //ETC
+                People_Count = dr.Field<long>("People_Count"),
+                Address = dr.Field<string>("Address"),
+                PostalCode = dr.Field<string>("PostalCode"),
+                City = dr.Field<string>("City")
             };
         }
 
@@ -41,12 +44,12 @@ namespace MQTTServer
 
             if ((long)res > 0)
             {
-                Console.WriteLine("Bentornato {0}!", ID);
+                //Console.WriteLine("Bentornato {0}!", ID);
             }
             else
             {
                 await db.QueryAsync($"INSERT INTO RegisteredDevices(ID,Last_Seen) Values('{ID}','{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}') ");
-                Console.WriteLine("Benvenuto {0}!", ID);
+                //Console.WriteLine("Benvenuto {0}!", ID);
             }
         }
 
@@ -64,14 +67,14 @@ namespace MQTTServer
             {
                 ID = dr["ID"].ToString(),
                 Last_Seen = DateTime.Parse(dr[("Last_Seen")].ToString()),
+                Registered_Location = dr.Field<long?>("Registered_Location")
             };
         }
 
         internal void increaseDelta(long ID_Location, int delta)
         {
-            string SQL ="";
-
-            
+            string SQL =$"UPDATE LocationInfo SET People_Count = (People_Count + {delta}) WHERE ID_Location = {ID_Location}";
+            db.Query(SQL);
         }
     }
 }

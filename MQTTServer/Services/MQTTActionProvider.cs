@@ -5,8 +5,8 @@ using MQTTServer.Models;
 
 namespace MQTTServer
 {
-  
-    public delegate void MQTTEndpointAction(MQTTEndpointData data);
+
+    public delegate void MQTTEndpointAction(Models.MQTTBrokerMessage data);
 
     public class MQTTActionProvider
     {
@@ -19,16 +19,12 @@ namespace MQTTServer
         }
         private readonly DBServices dbService;
 
-        public string Run(Models.MQTTBrokerMessage msg)
+        public void Run(Models.MQTTBrokerMessage msg)
         {
-            var data = new MQTTEndpointData() { Msg = msg };
 
             if (endpoints_actions.ContainsKey(msg.Topic)) //Se l'endpoint ha un'azione configurata  
-                endpoints_actions[msg.Topic].Invoke(data);
+                endpoints_actions[msg.Topic].Invoke(msg);
 
-            if (data.ReturnValue != null)
-                return JsonSerializer.Serialize(data.ReturnValue);
-            else return null;
         }
     }
 

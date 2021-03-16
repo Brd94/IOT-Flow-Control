@@ -1,10 +1,13 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 
 
 namespace MQTTServer
 {
+
+
     class Program
     {
 
@@ -15,7 +18,7 @@ namespace MQTTServer
 
         static void Main(string[] args)
         {
-            connector = new SQLiteConnector("/Users/brd/Desktop/Work/Uni/Tesi/IOT-Flow-Control/Shared/Data.db");
+            connector = new SQLiteConnector(@"C:\Users\Brd\Desktop\IOT-Flow-Control\Shared\Data.db");
 
             var broker = new MQTTBroker();
             broker.StartServer(UID, PWD, Port);
@@ -26,46 +29,63 @@ namespace MQTTServer
             var dBServices = new DBServices(connector);
 
             var actionprovider = new MQTTActionProvider()
-                        .AddEndpointAction("/esp/get_id_location", endpointdata =>
+                        .AddEndpointAction("esp/get_anagra", endpointdata =>
                         {
-                            var device = dBServices.getDevice(endpointdata.Msg.ID);
-
-                            if (device.Registered_Location.HasValue)
-                                endpointdata.ReturnValue = new { ID_Location = device.Registered_Location };
-                            else
-                                endpointdata.ReturnValue = new { ID_Location = -2 };
-
-                        })
-                        .AddEndpointAction("/esp/get_anagra", endpointdata =>
-                        {
-                            var device = dBServices.getDevice(endpointdata.Msg.ID);
+                            var device = dBServices.getDevice(endpointdata.ID);
 
                             if (device.Registered_Location.HasValue)
                             {
                                 var anagra = dBServices.getLocationInfo(device.Registered_Location.Value);
-                                endpointdata.ReturnValue = anagra;
+                                client.SendMessage("brokr/" +endpointdata.ID + "/anagra", JsonConvert.SerializeObject(anagra));
                             }
+                            else
+                            {
+                                client.SendMessage("brokr/" +endpointdata.ID + "/anagra", JsonConvert.SerializeObject(new { ID_Location = -2 }));
+                            }
+
+
                         })
-                        .AddEndpointAction("/esp/put_delta", endpointdata =>
+                        .AddEndpointAction("esp/put_delta", endpointdata =>
                         {
-                            var device = dBServices.getDevice(endpointdata.Msg.ID);
+                            var device = dBServices.getDevice(endpointdata.ID);
 
                             if (device.Registered_Location.HasValue)
-                                dBServices.increaseDelta(device.Registered_Location.Value, int.Parse(endpointdata.Msg.Payload));
+                            {
+                                dynamic doc = JsonConvert.DeserializeObject(endpointdata.Payload);
+
+                                var value = (int)doc.not_synced_delta;
+                                dBServices.increaseDelta(device.Registered_Location.Value, value);
+
+                                var anagra = dBServices.getLocationInfo(device.Registered_Location.Value);
+
+                                client.SendMessage("brokr/" + endpointdata.ID + "/reset_delta", "");
+
+
+                            }
+
+                        })
+                        .AddEndpointAction("esp/get_pcount", endpointdata =>
+                        {
+                            var device = dBServices.getDevice(endpointdata.ID);
+
+                            if (device.Registered_Location.HasValue)
+                            {
+                                var anagra = dBServices.getLocationInfo(device.Registered_Location.Value);
+
+                                client.SendMessage("brokr/" + device.Registered_Location + "/pcount", JsonConvert.SerializeObject(new { People_Count = anagra.People_Count }));
+
+                            }
+
 
                         });
 
             broker.OnSubscribe += sub => dBServices.RegisterDevice(sub);
 
-            broker.OnReceive += x =>
-            {
+            broker.OnReceive += x => actionprovider.Run(x); //Rispondo alla richiesta ricevuta dal broker
 
-                string response = actionprovider.Run(x);
 
-                if (response != null)
-                    client.SendMessage("brokr/" + x.ID + "/jsondata", response);
-
-            };
+            Console.WriteLine("Server in ascolto sulla porta {0},premere un INVIO per uscire...", Port);
+            Console.ReadLine();
 
             //     broker.ClientSubscribed += sub =>
             //    {
@@ -97,9 +117,6 @@ namespace MQTTServer
 
             //    };
 
-
-            Console.WriteLine("Server in ascolto sulla porta {0},premere un INVIO per uscire...", Port);
-            Console.ReadLine();
 
         }
 

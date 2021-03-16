@@ -1,9 +1,19 @@
+using Newtonsoft.Json;
+
 namespace MQTTServer.Models
 {
-    public struct MQTTEndpointData
+    public class MQTTEndpointData
     {
         public MQTTBrokerMessage Msg;
-        public object ReturnValue;
+        public dynamic ReturnValue;
 
+        public string ReturnTopic;
+
+        public string getJsonReturnValue()
+        {
+            if (ReturnValue != null)
+                return JsonConvert.SerializeObject(ReturnValue);
+            else return null;
+        }
     }
 }
