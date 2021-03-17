@@ -10,15 +10,20 @@
 #include "Structures.h"
 //#include "WebServer.h"
 #include <Preferences.h>
-Preferences preferences;
+#include <AutoConnect.h>
+
+Preferences preferences; 
+WiFiClient espClient;
+PubSubClient client(espClient);
+U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, 16, 15, 4);
+WebServer server;
+AutoConnect portal(server);
 
 char *ssid;
 char *password;
 
 char *mqtt_server = "192.168.178.40";
 
-WiFiClient espClient;
-PubSubClient client(espClient);
 long lastMsg = 0;
 long lastRetryMQTT = 0;
 long lastRSTPress = 0;
@@ -31,11 +36,8 @@ char station_id[20];
 
 String mac_address = String(WiFi.macAddress());
 
-U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, 16, 15, 4);
-WebServer server(80);
 
 anag anagra;
-//WebServer server;
 TaskHandle_t task_mqtt;
 pin gpio_pin_add;
 
@@ -101,7 +103,7 @@ void setup()
   u8g2.drawStr(3, 12, "Init prefs........OK");
   u8g2.sendBuffer();
 
-  WiFi.begin(ssid, password);
+  //WiFi.begin(ssid, password);
   u8g2.drawStr(3, 22, "Init wifi........OK");
   u8g2.sendBuffer();
 
@@ -113,8 +115,8 @@ void setup()
   //EEPROM.get(0, anagra); //Carico da memoria
 
   server.on("/", handle_onConnect);
-
-  server.begin();
+  portal.begin();
+  //server.begin();
   u8g2.drawStr(3, 32, "Init WebServer...OK");
   u8g2.sendBuffer();
 
@@ -344,6 +346,8 @@ void loop()
   //Serial.println(esp_get_free_heap_size());
   //server.runServer();
 
+  portal.handleClient();
+
   long now = millis();
 
   u8g2.clearBuffer(); //Pulisco
@@ -418,8 +422,10 @@ void loop()
     u8g2.drawStr(3, 46, "Per config. digitare");
     u8g2.drawStr(3, 54, "l'ind.IP sul browser");
 
-    if (anagra.id > 0) //Rispondo ai client dell'interfaccia web solo se l'anagrafica è valida
-      server.handleClient();
+
+
+    //if (anagra.id > 0) //Rispondo ai client dell'interfaccia web solo se l'anagrafica è valida
+    //  server.handleClient();
   }
 
   //Gestisco il l'I/O
