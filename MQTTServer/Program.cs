@@ -36,11 +36,11 @@ namespace MQTTServer
                             if (device.Registered_Location.HasValue)
                             {
                                 var anagra = dBServices.getLocationInfo(device.Registered_Location.Value);
-                                client.SendMessage("brokr/" +endpointdata.ID + "/anagra", JsonConvert.SerializeObject(anagra));
+                                client.SendMessage("brokr/" + endpointdata.ID + "/anagra", JsonConvert.SerializeObject(anagra));
                             }
                             else
                             {
-                                client.SendMessage("brokr/" +endpointdata.ID + "/anagra", JsonConvert.SerializeObject(new { ID_Location = -2 }));
+                                client.SendMessage("brokr/" + endpointdata.ID + "/anagra", JsonConvert.SerializeObject(new { ID_Location = -2 }));
                             }
 
 
@@ -71,14 +71,15 @@ namespace MQTTServer
                             if (device.Registered_Location.HasValue)
                             {
                                 var anagra = dBServices.getLocationInfo(device.Registered_Location.Value);
-
-                                client.SendMessage("brokr/" + device.Registered_Location + "/pcount", JsonConvert.SerializeObject(new { People_Count = anagra.People_Count }));
+                                
+                                if (anagra != null)
+                                    client.SendMessage("brokr/" + device.Registered_Location + "/pcount", JsonConvert.SerializeObject(new { People_Count = anagra.People_Count }));
 
                             }
 
 
                         });
-
+            
             broker.OnSubscribe += sub => dBServices.RegisterDevice(sub);
 
             broker.OnReceive += x => actionprovider.Run(x); //Rispondo alla richiesta ricevuta dal broker

@@ -48,7 +48,8 @@ namespace MQTTServer
             }
             else
             {
-                await db.QueryAsync($"INSERT INTO RegisteredDevices(ID,Last_Seen) Values({ID},{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}) ");
+                await db.QueryAsync($"INSERT INTO RegisteredDevices(ID) Values({ID}) ");
+                //await db.QueryAsync($"INSERT INTO RegisteredDevices(ID,Last_Seen) Values({ID},{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}) ");
                 //Console.WriteLine("Benvenuto {0}!", ID);
             }
         }
@@ -66,7 +67,7 @@ namespace MQTTServer
             return new RegisteredDevice()
             {
                 ID = dr["ID"].ToString(),
-                Last_Seen = DateTime.Parse(dr[("Last_Seen")].ToString()),
+                //Last_Seen = DateTime.Parse(dr[("Last_Seen")].ToString()),
                 Registered_Location = dr.Field<long?>("Registered_Location")
             };
         }
