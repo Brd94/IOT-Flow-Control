@@ -9,3 +9,9 @@ typedef struct {
     int pcount_server;
 
 }anag __attribute__ ((packed));;
+
+typedef struct {
+    int id;
+    int last_state;
+    int current_state;
+}pin __attribute__ ((packed));;
