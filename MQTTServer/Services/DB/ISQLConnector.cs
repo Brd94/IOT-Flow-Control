@@ -1,3 +1,4 @@
+using System;
 using System.Data;
 using System.Threading.Tasks;
 
@@ -7,10 +8,10 @@ namespace MQTTServer
     {
         Task Connect();
         Task Disconnect();
-        Task<int> NonQueryAsync(string sql);
-        DataSet Query(string sql);
-        Task<DataSet> QueryAsync(string sql);
-        Task<object> ScalarQueryAsync(string sql);
+        Task<int> NonQueryAsync(FormattableString sql);
+        DataSet Query(FormattableString sql);
+        Task<DataSet> QueryAsync(FormattableString sql);
+        Task<object> ScalarQueryAsync(FormattableString sql);
     }
 
 }

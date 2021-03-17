@@ -18,7 +18,7 @@ namespace MQTTServer
 
         static void Main(string[] args)
         {
-            connector = new SQLiteConnector(@"C:\Users\Brd\Desktop\IOT-Flow-Control\Shared\Data.db");
+            connector = new SQLiteConnector(@"C:\Users\Brd\Desktop\IOT-Flow-Control\Shared\Data.db"); // TODO : Cambiare db -> mysql
 
             var broker = new MQTTBroker();
             broker.StartServer(UID, PWD, Port);
@@ -55,7 +55,7 @@ namespace MQTTServer
 
                                 var value = (int)doc.not_synced_delta;
                                 dBServices.increaseDelta(device.Registered_Location.Value, value);
-
+                                dBServices.logDeviceDelta(device.ID, value);
                                 var anagra = dBServices.getLocationInfo(device.Registered_Location.Value);
 
                                 client.SendMessage("brokr/" + endpointdata.ID + "/reset_delta", "");

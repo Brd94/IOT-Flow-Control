@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Threading.Tasks;
@@ -5,7 +7,7 @@ using Microsoft.Data.Sqlite;
 
 namespace MQTTServer
 {
-    
+
     public class SQLiteConnector : ISQLConnector
     {
         private readonly string connectionString;
@@ -34,28 +36,79 @@ namespace MQTTServer
             connection = null;
         }
 
-        public async Task<int> NonQueryAsync(string sql)
+        public async Task<int> NonQueryAsync(FormattableString formattedsql)
         {
-            if (connection == null)
-                await Connect();
+            var queryArgs = formattedsql.GetArguments();
+            var sqliteParams = new List<SqliteParameter>();
 
-            return await new SqliteCommand(sql, connection).ExecuteNonQueryAsync();
-        }
-        public async Task<object> ScalarQueryAsync(string sql)
-        {
-            if (connection == null)
-                await Connect();
+            for (int i = 0; i < queryArgs.Length; i++)
+            {
+                var param = new SqliteParameter(i.ToString(), queryArgs[i]);
+                sqliteParams.Add(param);
+                queryArgs[i] = "@" + i;
+            }
 
-            return await new SqliteCommand(sql, connection).ExecuteScalarAsync();
-        }
+            string sql = formattedsql.ToString();
 
-        public async Task<DataSet> QueryAsync(string sql)
-        {
             if (connection == null)
                 await Connect();
 
             using (var cmd = new SqliteCommand(sql, connection))
             {
+                cmd.Parameters.AddRange(sqliteParams);
+
+                return await cmd.ExecuteNonQueryAsync();
+            }
+        }
+        public async Task<object> ScalarQueryAsync(FormattableString formattedsql)
+        {
+            var queryArgs = formattedsql.GetArguments();
+            var sqliteParams = new List<SqliteParameter>();
+
+            for (int i = 0; i < queryArgs.Length; i++)
+            {
+                var param = new SqliteParameter(i.ToString(), queryArgs[i]);
+                sqliteParams.Add(param);
+                queryArgs[i] = "@" + i;
+            }
+
+            string sql = formattedsql.ToString();
+
+            if (connection == null)
+                await Connect();
+
+            using (var cmd = new SqliteCommand(sql, connection))
+            {
+                cmd.Parameters.AddRange(sqliteParams);
+
+                return await cmd.ExecuteScalarAsync();
+            }
+        }
+
+        public async Task<DataSet> QueryAsync(FormattableString formattedsql)
+        {
+
+            var queryArgs = formattedsql.GetArguments();
+            var sqliteParams = new List<SqliteParameter>();
+
+            for (int i = 0; i < queryArgs.Length; i++)
+            {
+                var param = new SqliteParameter(i.ToString(), queryArgs[i]);
+                sqliteParams.Add(param);
+                queryArgs[i] = "@" + i;
+            }
+
+            string sql = formattedsql.ToString();
+
+            if (connection == null)
+                await Connect();
+
+            using (var cmd = new SqliteCommand(sql, connection))
+            {
+
+                cmd.Parameters.AddRange(sqliteParams);
+
+
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     DataSet dataSet = new DataSet();
@@ -67,14 +120,31 @@ namespace MQTTServer
             }
         }
 
-        public DataSet Query(string sql)
+        public DataSet Query(FormattableString formattedsql)
         {
+
+            var queryArgs = formattedsql.GetArguments();
+            var sqliteParams = new List<SqliteParameter>();
+
+            //Aggiungere riferimento : Moreno Gentili - Programmazione CS
+
+            for (int i = 0; i < queryArgs.Length; i++)
+            {
+                var param = new SqliteParameter(i.ToString(), queryArgs[i]);
+                sqliteParams.Add(param);
+                queryArgs[i] = "@" + i;
+            }
+
+            string sql = formattedsql.ToString();
 
             if (connection == null)
                 Connect().Wait();
 
             using (var cmd = new SqliteCommand(sql, connection))
             {
+
+                cmd.Parameters.AddRange(sqliteParams);
+
                 using (var reader = cmd.ExecuteReader())
                 {
                     DataSet dataSet = new DataSet();

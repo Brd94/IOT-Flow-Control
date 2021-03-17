@@ -16,7 +16,7 @@ namespace MQTTServer
 
         internal LocationInfo getLocationInfo(long ID_Location)
         {
-            string SQL = $"SELECT * FROM LocationInfo WHERE ID_Location = '{ID_Location}'"; //Correggere *
+            FormattableString SQL = $"SELECT * FROM LocationInfo WHERE ID_Location = {ID_Location}"; //Correggere *
             DataSet data = db.Query(SQL);
 
             if (data.Tables[0].Rows.Count == 0)
@@ -40,7 +40,7 @@ namespace MQTTServer
         public async void RegisterDevice(string ID)
         {
             //FormattedStringBuilder
-            var res = await db.ScalarQueryAsync($"SELECT COUNT(*) FROM RegisteredDevices WHERE ID='{ID}'"); //Posso fare anche un UPSERT
+            var res = await db.ScalarQueryAsync($"SELECT COUNT(*) FROM RegisteredDevices WHERE ID={ID}"); //Posso fare anche un UPSERT
 
             if ((long)res > 0)
             {
@@ -48,14 +48,14 @@ namespace MQTTServer
             }
             else
             {
-                await db.QueryAsync($"INSERT INTO RegisteredDevices(ID,Last_Seen) Values('{ID}','{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}') ");
+                await db.QueryAsync($"INSERT INTO RegisteredDevices(ID,Last_Seen) Values({ID},{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}) ");
                 //Console.WriteLine("Benvenuto {0}!", ID);
             }
         }
 
         public RegisteredDevice getDevice(string ID)
         {
-            string SQL = "SELECT * FROM RegisteredDevices";
+            FormattableString SQL = $"SELECT * FROM RegisteredDevices";
             DataSet data = db.Query(SQL);
 
             if (data.Tables[0].Rows.Count == 0)
@@ -71,9 +71,15 @@ namespace MQTTServer
             };
         }
 
+        internal void logDeviceDelta(string ID_Device, int value)
+        {
+            FormattableString SQL = $"INSERT INTO DeviceLogs VALUES({ID_Device},{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")},{value})";
+            db.NonQueryAsync(SQL);
+        }
+
         internal void increaseDelta(long ID_Location, int delta)
         {
-            string SQL =$"UPDATE LocationInfo SET People_Count = (People_Count + {delta}) WHERE ID_Location = {ID_Location}";
+            FormattableString SQL =$"UPDATE LocationInfo SET People_Count = (People_Count + {delta}) WHERE ID_Location = {ID_Location}";
             db.Query(SQL);
         }
     }
