@@ -14,11 +14,12 @@ namespace MQTTServer
         public static string UID = "Brd";
         public static string PWD = "Errata";
         public static int Port = 1883;
-        static SQLiteConnector connector;
+        static ISQLConnector connector;
 
         static void Main(string[] args)
         {
-            connector = new SQLiteConnector(@"C:\Users\Brd\Desktop\IOT-Flow-Control\Shared\Data.db"); // TODO : Cambiare db -> mysql
+            //connector = new SQLiteConnector(@"C:\Users\Brd\Desktop\IOT-Flow-Control\Shared\Data.db"); // TODO : Cambiare db -> mysql
+            connector = new MySQLConnector("192.168.178.48","dbIOTFC" ,"admin", "errata");
 
             var broker = new MQTTBroker();
             broker.StartServer(UID, PWD, Port);
