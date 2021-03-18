@@ -17,7 +17,7 @@ namespace WEBServer.Server.Models
 
         public IEnumerable<FlowData> getFlowData()
         {
-            string SQL = "SELECT * FROM Data";
+            FormattableString SQL = $"SELECT * FROM LocationInfo";
             DataSet data = db.Query(SQL);
 
             foreach(DataRow dr in data.Tables[0].Rows)
@@ -25,8 +25,9 @@ namespace WEBServer.Server.Models
                 yield return new FlowData()
                 {
                     Name = dr["Business_Name"].ToString(),
-                    PeopleNumber = dr.Field<long?>("P_Count"),
-                    LastUpdate = DateTime.Parse(dr.Field<string>("Last_Seen"))
+                    PeopleNumber = dr.Field<long?>("People_Count"),
+                    //LastUpdate = DateTime.Parse(dr.Field<string>("Last_Seen"))
+                    Info = "Aperto fino alle " + dr.Field<DateTime>("Closing").ToString("HH:mm")
                 };
             }
         }

@@ -1,37 +1,36 @@
-﻿using System;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.Sqlite;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace WEBServer.Server.Models.Infrastructure
 {
-
-    public class SQLiteDatabaseAccessor : IDatabaseAccessor
+    public class MySQLDatabaseAccessor : IDatabaseAccessor
     {
+
         public DataSet Query(FormattableString formattedsql)
         {
-
             var queryArgs = formattedsql.GetArguments();
-            var sqliteParams = new List<SqliteParameter>();
-
-            //Aggiungere riferimento : Moreno Gentili - Programmazione CS
+            var mysqlParams = new MySqlParameter[queryArgs.Length];
 
             for (int i = 0; i < queryArgs.Length; i++)
             {
-                var param = new SqliteParameter(i.ToString(), queryArgs[i]);
-                sqliteParams.Add(param);
+                var param = new MySqlParameter(i.ToString(), queryArgs[i]);
+                mysqlParams[i] = param;
                 queryArgs[i] = "@" + i;
             }
 
             string sql = formattedsql.ToString();
 
-            using (var connection = new SqliteConnection("Data Source=/Users/brd/Desktop/Work/Uni/Tesi/IOT-Flow-Control/Shared/Data.db"))
+            using (var connection = new MySqlConnection("server=192.168.178.20;database=dbIOTFC;user id=admin;password=errata")) //Da spostare in appsettings.json
             {
                 connection.Open();
-                using (var cmd = new SqliteCommand(sql, connection))
-                {
 
-                    cmd.Parameters.AddRange(sqliteParams);
+                using (var cmd = new MySqlCommand(sql, connection))
+                {
+                    cmd.Parameters.AddRange(mysqlParams);
 
                     using (var reader = cmd.ExecuteReader())
                     {

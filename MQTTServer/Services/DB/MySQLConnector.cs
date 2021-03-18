@@ -11,35 +11,20 @@ namespace MQTTServer
     public class MySQLConnector : ISQLConnector
     {
         private readonly string connectionString;
-        MySqlConnection connection;
-        public MySQLConnector(string server,string database,string uid,string password)
+
+        public MySQLConnector(string server, string database, string uid, string password)
         {
             var builder = new MySqlConnectionStringBuilder();
             builder.Server = server;
             builder.Database = database;
             builder.UserID = uid;
             builder.Password = password;
-            builder.Port = 3306;
 
             this.connectionString = builder.ConnectionString;
 
         }
 
-        public async Task Connect()
-        {
-            await Disconnect();
 
-            connection = new MySqlConnection(connectionString);
-            await connection.OpenAsync();
-        }
-
-        public async Task Disconnect()
-        {
-            if (connection != null)
-                await connection.CloseAsync();
-
-            connection = null;
-        }
 
         public async Task<int> NonQueryAsync(FormattableString formattedsql)
         {
@@ -55,14 +40,17 @@ namespace MQTTServer
 
             string sql = formattedsql.ToString();
 
-            if (connection == null)
-                await Connect();
-
-            using (var cmd = new MySqlCommand(sql, connection))
+            using (var connection = new MySqlConnection(connectionString))
             {
-                cmd.Parameters.AddRange(mysqlParams);
+                await connection.OpenAsync();
 
-                return await cmd.ExecuteNonQueryAsync();
+                using (var cmd = new MySqlCommand(sql, connection))
+                {
+                    cmd.Parameters.AddRange(mysqlParams);
+
+                    return await cmd.ExecuteNonQueryAsync();
+                }
+
             }
         }
 
@@ -80,14 +68,16 @@ namespace MQTTServer
 
             string sql = formattedsql.ToString();
 
-            if (connection == null)
-                await Connect();
-
-            using (var cmd = new MySqlCommand(sql, connection))
+            using (var connection = new MySqlConnection(connectionString))
             {
-                cmd.Parameters.AddRange(mysqlParams);
+                await connection.OpenAsync();
 
-                return await cmd.ExecuteScalarAsync();
+                using (var cmd = new MySqlCommand(sql, connection))
+                {
+                    cmd.Parameters.AddRange(mysqlParams);
+
+                    return await cmd.ExecuteScalarAsync();
+                }
             }
         }
 
@@ -106,21 +96,23 @@ namespace MQTTServer
 
             string sql = formattedsql.ToString();
 
-            if (connection == null)
-                await Connect();
-
-            using (var cmd = new MySqlCommand(sql, connection))
+            using (var connection = new MySqlConnection(connectionString))
             {
-                cmd.Parameters.AddRange(mysqlParams);
+                await connection.OpenAsync();
 
-
-                using (var reader = await cmd.ExecuteReaderAsync())
+                using (var cmd = new MySqlCommand(sql, connection))
                 {
-                    DataSet dataSet = new DataSet();
-                    DataTable dataTable = new DataTable();
-                    dataSet.Tables.Add(dataTable);
-                    dataTable.Load(reader);
-                    return dataSet;
+                    cmd.Parameters.AddRange(mysqlParams);
+
+
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        DataSet dataSet = new DataSet();
+                        DataTable dataTable = new DataTable();
+                        dataSet.Tables.Add(dataTable);
+                        dataTable.Load(reader);
+                        return dataSet;
+                    }
                 }
             }
         }
@@ -140,20 +132,22 @@ namespace MQTTServer
 
             string sql = formattedsql.ToString();
 
-            if (connection == null)
-                Connect().Wait();
-
-            using (var cmd = new MySqlCommand(sql, connection))
+            using (var connection = new MySqlConnection(connectionString))
             {
-                cmd.Parameters.AddRange(mysqlParams);
+                connection.Open();
 
-                using (var reader = cmd.ExecuteReader())
+                using (var cmd = new MySqlCommand(sql, connection))
                 {
-                    DataSet dataSet = new DataSet();
-                    DataTable dataTable = new DataTable();
-                    dataSet.Tables.Add(dataTable);
-                    dataTable.Load(reader);
-                    return dataSet;
+                    cmd.Parameters.AddRange(mysqlParams);
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        DataSet dataSet = new DataSet();
+                        DataTable dataTable = new DataTable();
+                        dataSet.Tables.Add(dataTable);
+                        dataTable.Load(reader);
+                        return dataSet;
+                    }
                 }
             }
         }

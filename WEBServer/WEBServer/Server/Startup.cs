@@ -25,7 +25,7 @@ namespace WEBServer.Server
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddTransient<IDatabaseAccessor,SQLiteDatabaseAccessor>();
+            services.AddTransient<IDatabaseAccessor,MySQLDatabaseAccessor>();
             services.AddTransient<IFlowService,ADOFlowService>();
             services.AddControllersWithViews();
             services.AddRazorPages();

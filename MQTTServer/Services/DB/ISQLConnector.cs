@@ -6,8 +6,6 @@ namespace MQTTServer
 {
     public interface ISQLConnector
     {
-        Task Connect();
-        Task Disconnect();
         Task<int> NonQueryAsync(FormattableString sql);
         DataSet Query(FormattableString sql);
         Task<DataSet> QueryAsync(FormattableString sql);

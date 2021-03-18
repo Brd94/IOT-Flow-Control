@@ -40,7 +40,7 @@ namespace MQTTServer
         public async void RegisterDevice(string ID)
         {
             //FormattedStringBuilder
-            var res = await db.ScalarQueryAsync($"SELECT COUNT(*) FROM RegisteredDevices WHERE ID={ID}"); //Posso fare anche un UPSERT
+            var res = await db.ScalarQueryAsync($"SELECT COUNT(*) FROM RegisteredDevices WHERE ID_Device={ID}"); //Posso fare anche un UPSERT
 
             if ((long)res > 0)
             {
@@ -48,7 +48,7 @@ namespace MQTTServer
             }
             else
             {
-                await db.QueryAsync($"INSERT INTO RegisteredDevices(ID) Values({ID}) ");
+                await db.QueryAsync($"INSERT INTO RegisteredDevices(ID_Device) Values({ID}) ");
                 //await db.QueryAsync($"INSERT INTO RegisteredDevices(ID,Last_Seen) Values({ID},{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}) ");
                 //Console.WriteLine("Benvenuto {0}!", ID);
             }
@@ -66,7 +66,7 @@ namespace MQTTServer
 
             return new RegisteredDevice()
             {
-                ID = dr["ID"].ToString(),
+                ID_Device = dr["ID_Device"].ToString(),
                 //Last_Seen = DateTime.Parse(dr[("Last_Seen")].ToString()),
                 Registered_Location = dr.Field<long?>("Registered_Location")
             };

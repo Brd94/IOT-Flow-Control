@@ -6,7 +6,7 @@ namespace WEBServer.Server.Models.Infrastructure
    
         public interface IDatabaseAccessor
         {
-            DataSet Query(string SQL);
+            DataSet Query(FormattableString SQL);
         }
     
 }
