@@ -6,8 +6,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
-using WEBServer.Server.Models.Infrastructure;
+using WEBServer.Server.Services.Infrastructure;
 using WEBServer.Server.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace WEBServer.Server
 {
@@ -24,9 +26,29 @@ namespace WEBServer.Server
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            string connectionString = "server=192.168.178.20;database=dbIOTFC;user id=root;password=Ogpdmllf2!"; //Da portare su file di config.
 
-            services.AddTransient<IDatabaseAccessor,MySQLDatabaseAccessor>();
-            services.AddTransient<IFlowService,ADOFlowService>();
+
+            services.AddDbContext<dbIOTFCdbContext>(options =>
+                options.UseMySQL(connectionString));
+
+            services.AddDefaultIdentity<IdentityUser>()
+                .AddEntityFrameworkStores<dbIOTFCdbContext>();
+
+            services.AddTransient<IDatabaseAccessor, MySQLDatabaseAccessor>();
+            services.AddTransient<IFlowService, ADOFlowService>();
+
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.Cookie.HttpOnly = false;
+                options.Events.OnRedirectToLogin = context =>
+                {
+                    context.Response.StatusCode = 401;
+                    return System.Threading.Tasks.Task.CompletedTask;
+                };
+            });
+            services.AddControllers().AddNewtonsoftJson();
+
             services.AddControllersWithViews();
             services.AddRazorPages();
         }
@@ -51,6 +73,9 @@ namespace WEBServer.Server
             app.UseStaticFiles();
 
             app.UseRouting();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {

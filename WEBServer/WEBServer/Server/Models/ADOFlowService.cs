@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using WEBServer.Server.Models.Infrastructure;
+using WEBServer.Server.Services.Infrastructure;
 using WEBServer.Shared;
 
 namespace WEBServer.Server.Models

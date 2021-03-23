@@ -1,6 +1,27 @@
 ﻿@page "/"
+@using GoogleMapsComponents
+@using GoogleMapsComponents.Maps
 
-<h1>MAPPA</h1>
+<div class="w-100 p-3">
+    <GoogleMap @ref="@map1" Id="map1" Options="@mapOptions"></GoogleMap>
 
-Inserisco qui la mappa...
+</div>
 
+@functions {
+    private GoogleMap map1;
+    private MapOptions mapOptions;
+
+    protected override void OnInitialized()
+    {
+        mapOptions = new MapOptions()
+        {
+            Zoom = 10,
+            Center = new LatLngLiteral()
+            {
+                Lat = 43.062410,
+                Lng = 12.201383
+            },
+            MapTypeId = MapTypeId.Roadmap
+        };
+    }
+}

@@ -1,0 +1,50 @@
+﻿@page "/register"
+@inject NavigationManager navigationManager
+@inject CustomStateProvider authStateProvider
+
+<div class="content col-md-6 mx-auto">
+
+    <h1 class="h2 font-weight-normal login-title text-center mb-4 mt-1">
+        Registrazione
+    </h1>
+    
+    <EditForm class="form-signin" OnValidSubmit="OnSubmit" Model="registerRequest">
+        <DataAnnotationsValidator />
+        @* <label for="inputUsername" class="sr-only">User Name</label> *@
+        <InputText id="inputUsername" class="form-control m-3" placeholder="Indirizzo mail" autofocus
+            @bind-Value="@registerRequest.UserName" />
+        <ValidationMessage For="@(() => registerRequest.UserName)" />
+        @* <label for="inputPassword" class="sr-only">Password</label> *@
+        <InputText type="password" id="inputPassword" class="form-control m-3" placeholder="Password"
+            @bind-Value="@registerRequest.Password" />
+        <ValidationMessage For="@(() => registerRequest.Password)" />
+        @* <label for="inputPasswordConfirm" class="sr-only">Password Confirmation</label> *@
+        <InputText type="password" id="inputPasswordConfirm" class="form-control m-3" placeholder="Conferma Password"
+            @bind-Value="@registerRequest.PasswordConfirm" />
+        <ValidationMessage For="@(() => registerRequest.PasswordConfirm)" />
+        <button class="btn btn-lg btn-primary btn-block col-md-4 mx-auto" type="submit">Crea Account</button>
+        <label class="text-danger">@error</label>
+        <NavLink href="login">
+            <h6 class="font-weight-normal text-center">Hai già un account? Clicca qui per Login</h6>
+        </NavLink>
+    </EditForm>
+
+</div>
+
+@functions{
+    RegisterRequest registerRequest { get; set; } = new RegisterRequest();
+    string error { get; set; }
+    async Task OnSubmit()
+    {
+        error = null;
+        try
+        {
+            await authStateProvider.Register(registerRequest);
+            navigationManager.NavigateTo("");
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+    }
+}

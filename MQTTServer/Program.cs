@@ -19,7 +19,7 @@ namespace MQTTServer
         static void Main(string[] args)
         {
             //connector = new SQLiteConnector(@"C:\Users\Brd\Desktop\IOT-Flow-Control\Shared\Data.db"); // TODO : Cambiare db -> mysql
-            connector = new MySQLConnector("192.168.178.20","dbIOTFC" ,"admin", "errata");
+            connector = new MySQLConnector("192.168.178.20", "dbIOTFC", "admin", "errata"); //Da portare su file esterno
 
             var broker = new MQTTBroker();
             broker.StartServer(UID, PWD, Port);
@@ -33,10 +33,11 @@ namespace MQTTServer
                         .AddEndpointAction("esp/get_anagra", endpointdata =>
                         {
                             var device = dBServices.getDevice(endpointdata.ID);
+                            var location = dBServices.getDeviceLocation(device.ID_Device);
 
-                            if (device.Registered_Location.HasValue)
+                            if (location.HasValue)
                             {
-                                var anagra = dBServices.getLocationInfo(device.Registered_Location.Value);
+                                var anagra = dBServices.getLocationInfo(location.Value);
                                 client.SendMessage("brokr/" + endpointdata.ID + "/anagra", JsonConvert.SerializeObject(anagra));
                             }
                             else
@@ -49,15 +50,15 @@ namespace MQTTServer
                         .AddEndpointAction("esp/put_delta", endpointdata =>
                         {
                             var device = dBServices.getDevice(endpointdata.ID);
+                            var location = dBServices.getDeviceLocation(device.ID_Device); //Controllo se ha una location valida
 
-                            if (device.Registered_Location.HasValue)
+                            if (location.HasValue)
                             {
                                 dynamic doc = JsonConvert.DeserializeObject(endpointdata.Payload);
 
                                 var value = (int)doc.not_synced_delta;
-                                dBServices.increaseDelta(device.Registered_Location.Value, value);
+
                                 dBServices.logDeviceDelta(device.ID_Device, value);
-                                var anagra = dBServices.getLocationInfo(device.Registered_Location.Value);
 
                                 client.SendMessage("brokr/" + endpointdata.ID + "/reset_delta", "");
 
@@ -68,19 +69,25 @@ namespace MQTTServer
                         .AddEndpointAction("esp/get_pcount", endpointdata =>
                         {
                             var device = dBServices.getDevice(endpointdata.ID);
+                            var location = dBServices.getDeviceLocation(device.ID_Device);
 
-                            if (device.Registered_Location.HasValue)
+                            if (location.HasValue)
                             {
-                                var anagra = dBServices.getLocationInfo(device.Registered_Location.Value);
-                                
+                                var anagra = dBServices.getLocationInfo(location.Value);
+
                                 if (anagra != null)
-                                    client.SendMessage("brokr/" + device.Registered_Location + "/pcount", JsonConvert.SerializeObject(new { People_Count = anagra.People_Count }));
+                                {
+                                    //client.SendMessage("brokr/" + endpointdata.ID + "/pcount", JsonConvert.SerializeObject(new { People_Count = anagra.People_Count })); //Informo il sender con la nuova conta 
+
+                                    //! Da aggiungere la logica per chiamare tutti i dispositivi associati a quella location !
+
+                                }
 
                             }
 
 
                         });
-            
+
             broker.OnSubscribe += sub => dBServices.RegisterDevice(sub);
 
             broker.OnReceive += x => actionprovider.Run(x); //Rispondo alla richiesta ricevuta dal broker

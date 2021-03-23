@@ -22,7 +22,7 @@ AutoConnect portal(server);
 char *ssid;
 char *password;
 
-char *mqtt_server = "192.168.178.40";
+char *mqtt_server = "192.168.178.20";
 
 long lastMsg = 0;
 long lastRetryMQTT = 0;
@@ -62,10 +62,7 @@ void setup()
 
   Serial.println();
 
-  //Inizializzo il pin che gestisce l'incremento del delta
-  gpio_pin_add.id = 0;
-  gpio_pin_add.current_state = 0;
-  gpio_pin_add.last_state = 0;
+  
 
   preferences.begin("EEPROM", false);
 
@@ -73,7 +70,7 @@ void setup()
   //anagra.address = preferences.getString("anagra_address");
   //anagra.business_name = NULL;
   //anagra.pcount = 0;
-  setdelta(0);
+  //setdelta(0);
   Serial.println("NOT SYNCED : " + preferences.getString("delta"));
   anagra.not_synced_delta = preferences.getString("delta").toInt();
 
@@ -130,6 +127,11 @@ void setup()
       0,
       &task_mqtt,
       0);
+
+  //Inizializzo il pin che gestisce l'incremento del delta
+  gpio_pin_add.id = 0;
+  gpio_pin_add.current_state = digitalRead(gpio_pin_add.id);
+  gpio_pin_add.last_state = digitalRead(gpio_pin_add.id);
 
   delay(1700);
 }
@@ -240,7 +242,7 @@ void callback(char *topic, byte *message, unsigned int length)
     Serial.println("RST DELTA");
     client.publish("esp/get_pcount", "");
   }
-
+  
   if (String(topic) == ("brokr/" + String(anagra.id) + "/pcount"))
   {
     anagra.pcount_server = doc["People_Count"];
@@ -291,11 +293,7 @@ bool get_pin_change(pin &gpio_pin)
 
   gpio_pin.current_state = digitalRead(gpio_pin.id);
 
-  // Serial.println("Stato :");
-  // Serial.print(gpio_pin.current_state);
-  // Serial.println("Stato :");
-  // Serial.print(gpio_pin.last_state);
-
+  
   if (gpio_pin.current_state != gpio_pin.last_state)
   {
     if (gpio_pin.current_state == HIGH)

@@ -1,5 +1,23 @@
-﻿<div class="top-row pl-4 navbar navbar-dark">
+﻿@inject NavigationManager _navigationManager
+@inject CustomStateProvider authStateProvider
+
+
+<div class="top-row pl-4 navbar navbar-dark">
     <a class="navbar-brand" href="">IOT Flow Control</a>
+
+    <AuthorizeView>
+        <Authorized>
+            <button class="btn btn-danger" @onclick="LogoutUser">
+                <span class="oi oi-account-logout" aria-hidden="true"></span>
+          </button>
+        </Authorized>
+        <NotAuthorized>
+            <button class="btn btn-primary" @onclick="LoginUser">
+                <span class="oi oi-account-login" aria-hidden="true"></span>
+          </button>
+        </NotAuthorized>
+    </AuthorizeView>
+
     <button class="navbar-toggler" @onclick="ToggleNavMenu">
         <span class="navbar-toggler-icon"></span>
     </button>
@@ -12,17 +30,42 @@
                 <span class="oi oi-map" aria-hidden="true"></span> Mappa
             </NavLink>
         </li>
-        
+
         <li class="nav-item px-3">
             <NavLink class="nav-link" href="fetchdata">
                 <span class="oi oi-list-rich" aria-hidden="true"></span> Rilevazioni
             </NavLink>
         </li>
+
+        <p></p>
+
+        <AuthorizeView>
+            <Authorized>
+                <li class="divider"></li>
+                
+
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="createcompany">
+                        <span class="oi oi-plus"></span> Aggiungi Azienda
+                    </NavLink>
+                </li>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="@($"company/1")">
+                        <span class="oi oi-home" aria-hidden="true"></span> Museo delle Belle arti
+                    </NavLink>
+                    <NavLink class="nav-link" href="@($"company/2")">
+                        <span class="oi oi-home" aria-hidden="true"></span> Museo del Tulle
+                    </NavLink>
+                </li>
+            </Authorized>         
+        </AuthorizeView>
+
+       
+
     </ul>
 </div>
 
-@code {
-    private bool collapseNavMenu = true;
+@code { private bool collapseNavMenu = true;
 
     private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
@@ -30,4 +73,14 @@
     {
         collapseNavMenu = !collapseNavMenu;
     }
-}
+
+    private async Task LogoutUser()
+    {
+        await authStateProvider.Logout();
+        _navigationManager.NavigateTo("/", true);
+    }
+
+    private void LoginUser()
+    {
+        _navigationManager.NavigateTo("/login", true);
+    } }

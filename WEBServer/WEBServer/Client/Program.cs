@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using WEBServer.Client.ViewModel;
+using Microsoft.AspNetCore.Components.Authorization;
+using WEBServer.Client.Services;
 
 namespace WEBServer.Client
 {
@@ -16,9 +19,16 @@ namespace WEBServer.Client
         {
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
             builder.RootComponents.Add<App>("#app");
+           
+            builder.Services.AddOptions();
+            builder.Services.AddAuthorizationCore();
 
-            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+            builder.Services.AddScoped<CustomStateProvider>();
+            builder.Services.AddScoped<AuthenticationStateProvider>(s => s.GetRequiredService<CustomStateProvider>());
+            builder.Services.AddScoped<IAuthService, AuthService>();
 
+            builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+            
             await builder.Build().RunAsync();
         }
     }
