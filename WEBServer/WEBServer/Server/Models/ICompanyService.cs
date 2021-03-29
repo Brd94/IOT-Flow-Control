@@ -9,5 +9,6 @@ namespace WEBServer.Server.Models
          
         public IEnumerable<Company> GetCompanies(string ID_User);
         public Company GetCompany(int ID);
+        public void RegisterCompany(Company company);
     }
 }

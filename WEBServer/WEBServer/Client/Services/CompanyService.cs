@@ -22,7 +22,13 @@ namespace WEBServer.Client.Services
 
         public async Task<Company> GetCompanyAsync(int ID)
         {
-            return await httpClient.GetFromJsonAsync<Company>($"api/company/getcompanies/{ID}");
+            return await httpClient.GetFromJsonAsync<Company>($"api/company/getcompany?id={ID}");
+        }
+
+        public async Task RegisterCompany(Company company)
+        {
+            var result = await httpClient.PostAsJsonAsync($"api/company/registercompany", company);
+            result.EnsureSuccessStatusCode();
         }
     }
 }

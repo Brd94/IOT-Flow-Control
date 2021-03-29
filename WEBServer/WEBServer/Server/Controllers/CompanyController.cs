@@ -22,25 +22,32 @@ namespace WEBServer.Server.Controllers
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly ICompanyService companyService;
 
-        public CompanyController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager,ICompanyService companyService)
+        public CompanyController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ICompanyService companyService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             this.companyService = companyService;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet]
-        public Company GetCompany(int ID)
+        public Company GetCompany(string ID)
         {
-            return companyService.GetCompany(ID);
+            return companyService.GetCompany(int.Parse(ID));
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet]
         public IEnumerable<Company> GetCompanies()
         {
             return companyService.GetCompanies(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+        }
+
+        [HttpPost]
+        public IActionResult RegisterCompany(Company company)
+        {
+            companyService.RegisterCompany(company);
+            return Ok();
         }
 
     }

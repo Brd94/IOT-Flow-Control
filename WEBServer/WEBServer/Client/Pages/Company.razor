@@ -8,11 +8,10 @@
 @code{
     [Parameter]
     public string ID { get; set; }
-    public WEBServer.Shared.Company company {get;set;}
+    public WEBServer.Shared.Company company { get; set; } = new WEBServer.Shared.Company();
     protected override async Task OnInitializedAsync()
     {
         company = await companyService.GetCompanyAsync(int.Parse(ID));
-        await base.OnInitializedAsync();
     }
 
 }

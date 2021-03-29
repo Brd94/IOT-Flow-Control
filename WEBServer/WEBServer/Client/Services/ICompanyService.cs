@@ -8,5 +8,6 @@ namespace WEBServer.Client.Services
     {
         public Task<IEnumerable<Company>> GetCompaniesAsync();
         public Task<Company> GetCompanyAsync(int ID);
+        public Task RegisterCompany(Company company);
     }
 }

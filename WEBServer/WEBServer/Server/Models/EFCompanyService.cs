@@ -52,5 +52,10 @@ namespace WEBServer.Server.Models
 
             }).FirstOrDefault();
         }
+
+        public void RegisterCompany(Company company)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

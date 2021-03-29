@@ -1,0 +1,57 @@
+﻿@page "/registercompany"
+@inject NavigationManager navigationManager
+@inject CustomStateProvider authStateProvider
+@inject ICompanyService companyService
+
+<h1>Inserisci attivita</h1>
+
+<EditForm class="form-signin" OnValidSubmit="OnSubmit" Model="company">
+    <DataAnnotationsValidator />
+    @* <label for="inputUsername" class="sr-only">User Name</label> *@
+    <InputText id="businessname" class="form-control m-3" placeholder="Nome Azienda" autofocus
+               @bind-Value="@company.BusinessName" />
+    <ValidationMessage For="@(() => company.BusinessName)" />
+    @* <label for="inputPassword" class="sr-only">Password</label> *@
+    <InputText id="address" class="form-control m-3" placeholder="Indirizzo"
+               @bind-Value="@company.Address" />
+    <ValidationMessage For="@(() => company.Address)" />
+    @* <label for="inputPasswordConfirm" class="sr-only">Password Confirmation</label> *@
+    <InputText id="city" class="form-control m-3" placeholder="Città"
+               @bind-Value="@company.City" />
+    <ValidationMessage For="@(() => company.City)" />
+    <InputText id="city" class="form-control m-3" placeholder="Cod. Postale"
+               @bind-Value="@company.PostalCode" />
+    <ValidationMessage For="@(() => company.PostalCode)" />
+    
+    <ValidationMessage For="@(() => company.Opening)" />
+    <button class="btn btn-lg btn-primary btn-block col-md-4 mx-auto" type="submit">Crea</button>
+    <label class="text-danger">@error</label>
+
+</EditForm>
+
+
+@functions{
+    
+    public WEBServer.Shared.Company company { get; set; } = new WEBServer.Shared.Company();
+    string error { get; set; }
+   
+    async Task OnSubmit()
+    {
+        //Logica validazione lato client
+
+        error = null;
+        try
+        {
+            await companyService.RegisterCompany(company);
+            navigationManager.NavigateTo("");
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+    }
+}
+
+
+
+}
