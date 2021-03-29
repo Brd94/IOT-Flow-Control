@@ -1,7 +1,12 @@
-namespace Client.Services
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using WEBServer.Shared;
+
+namespace WEBServer.Client.Services
 {
-    public class ICompanyService
+    public interface ICompanyService
     {
-        
+        public Task<IEnumerable<Company>> GetCompaniesAsync();
+        public Task<Company> GetCompanyAsync(int ID);
     }
 }

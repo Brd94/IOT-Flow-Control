@@ -9,13 +9,13 @@ using WEBServer.Server.Models.Entities;
 
 namespace WEBServer.Server.Services.Infrastructure
 {
-    public partial class dbIOTFCdbContext : IdentityDbContext
+    public partial class dbIOTFCContext : IdentityDbContext
     {
-        public dbIOTFCdbContext()
+        public dbIOTFCContext()
         {
         }
 
-        public dbIOTFCdbContext(DbContextOptions<dbIOTFCdbContext> options)
+        public dbIOTFCContext(DbContextOptions<dbIOTFCContext> options)
             : base(options)
         {
         }
@@ -65,9 +65,9 @@ namespace WEBServer.Server.Services.Infrastructure
                 entity.Property(m => m.Name).HasMaxLength(127);
             });
 
-            
-            
-            
+
+
+
             modelBuilder.Entity<DeviceInfo>(entity =>
             {
                 entity.HasKey(e => e.IdDevice)
@@ -85,9 +85,10 @@ namespace WEBServer.Server.Services.Infrastructure
 
             modelBuilder.Entity<LocationInfo>(entity =>
             {
+                
                 entity.HasKey(e => e.IdLocation)
                     .HasName("PRIMARY");
-
+                    
                 entity.ToTable("LocationInfo", "dbIOTFC");
 
                 entity.HasIndex(e => new { e.IdLocation, e.Status }, "IDX1");
@@ -168,6 +169,41 @@ namespace WEBServer.Server.Services.Infrastructure
                     .HasForeignKey(d => d.IdDeviceFk)
                     .HasConstraintName("Probe_Constraints");
             });
+
+            // modelBuilder.Entity<dbIOTFCdbContext.UserLocation>(entity =>
+            // {
+            //     entity.HasKey(e => e.IdUl)
+            //         .HasName("PRIMARY");
+
+            //     entity.ToTable("UserLocations", "dbIOTFC");
+
+            //     entity.HasIndex(e => e.IdLocation, "Location_Constraints_UL");
+
+            //     entity.HasIndex(e => e.IdUser, "User_Constraints");
+
+            //     entity.Property(e => e.IdUl).HasColumnName("ID_UL");
+
+            //     entity.Property(e => e.IdLocation).HasColumnName("ID_Location");
+
+            //     entity.Property(e => e.IdUser)
+            //         .IsRequired()
+            //         .HasMaxLength(256)
+            //         .HasColumnName("ID_User");
+
+            //     entity.HasOne(d => d.IdLocationNavigation)
+            //         .WithMany(p => p.UserLocations)
+            //         .HasForeignKey(d => d.IdLocation)
+            //         .HasConstraintName("Location_Constraints_UL");
+
+            //     entity.HasOne(d => d.IdUserNavigation)
+            //         .WithMany(p => p.UserLocations)
+            //         .HasForeignKey(d => d.IdUser)
+            //         .HasConstraintName("User_Constraints");
+            // });
+
+      
+
+
 
             OnModelCreatingPartial(modelBuilder);
         }

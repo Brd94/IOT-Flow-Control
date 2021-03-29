@@ -1,16 +1,18 @@
 ﻿@page "/company/{id}"
 @inject NavigationManager navigationManager
 @inject CustomStateProvider authStateProvider
+@inject ICompanyService companyService
 
-<h1>Carico i dettagli dell'azienda numero @ID ...</h1>
+<h1>@company.BusinessName</h1>
 
 @code{
     [Parameter]
     public string ID { get; set; }
-
-    protected override Task OnInitializedAsync()
+    public WEBServer.Shared.Company company {get;set;}
+    protected override async Task OnInitializedAsync()
     {
-        return base.OnInitializedAsync();
+        company = await companyService.GetCompanyAsync(int.Parse(ID));
+        await base.OnInitializedAsync();
     }
 
 }

@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 #nullable disable
 
-namespace WEBServer.Server.Models.Entities
+namespace WEBServer.Server.dbIOTFCdbContext
 {
     public partial class LocationInfo
     {
         public LocationInfo()
         {
             Movements = new HashSet<Movement>();
+            UserLocations = new HashSet<UserLocation>();
         }
+
         public int IdLocation { get; set; }
         public string BusinessName { get; set; }
         public string Address { get; set; }
@@ -23,5 +24,6 @@ namespace WEBServer.Server.Models.Entities
         public byte Status { get; set; }
 
         public virtual ICollection<Movement> Movements { get; set; }
+        public virtual ICollection<UserLocation> UserLocations { get; set; }
     }
 }

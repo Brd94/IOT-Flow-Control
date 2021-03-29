@@ -29,14 +29,15 @@ namespace WEBServer.Server
             string connectionString = "server=192.168.178.20;database=dbIOTFC;user id=root;password=Ogpdmllf2!"; //Da portare su file di config.
 
 
-            services.AddDbContext<dbIOTFCdbContext>(options =>
+            services.AddDbContext<WEBServer.Server.Services.Infrastructure.dbIOTFCContext>(options =>
                 options.UseMySQL(connectionString));
 
             services.AddDefaultIdentity<IdentityUser>()
-                .AddEntityFrameworkStores<dbIOTFCdbContext>();
+                .AddEntityFrameworkStores<WEBServer.Server.Services.Infrastructure.dbIOTFCContext>();
 
             services.AddTransient<IDatabaseAccessor, MySQLDatabaseAccessor>();
             services.AddTransient<IFlowService, ADOFlowService>();
+            services.AddTransient<ICompanyService,ADOCompanyService>();
 
             services.ConfigureApplicationCookie(options =>
             {

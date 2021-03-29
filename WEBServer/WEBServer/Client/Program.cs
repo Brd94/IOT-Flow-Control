@@ -26,6 +26,8 @@ namespace WEBServer.Client
             builder.Services.AddScoped<CustomStateProvider>();
             builder.Services.AddScoped<AuthenticationStateProvider>(s => s.GetRequiredService<CustomStateProvider>());
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<ICompanyService, CompanyService>();
+
 
             builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
             
