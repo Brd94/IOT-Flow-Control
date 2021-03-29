@@ -1,11 +1,17 @@
 ﻿@page "/"
 @using GoogleMapsComponents
 @using GoogleMapsComponents.Maps
+@using Microsoft.JSInterop;
+@using System.Threading.Tasks;
+@inject IJSRuntime JS;
 
-<div class="w-100 p-3">
+<div>
+
+
     <GoogleMap @ref="@map1" Id="map1" Options="@mapOptions"></GoogleMap>
-
 </div>
+
+
 
 @functions {
     private GoogleMap map1;
@@ -13,6 +19,8 @@
 
     protected override void OnInitialized()
     {
+
+
         mapOptions = new MapOptions()
         {
             Zoom = 10,
@@ -21,7 +29,34 @@
                 Lat = 43.062410,
                 Lng = 12.201383
             },
-            MapTypeId = MapTypeId.Roadmap
+            MapTypeId = MapTypeId.Roadmap,
+            DisableDefaultUI = true
+             
         };
+
+
     }
+
+
+}
+@code{
+    public int Height { get; set; }
+
+    @* protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+    } *@
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await getHeight();
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public async Task getHeight()
+    {
+        Height = await JS.InvokeAsync<int>("returnHeigth");
+    }
+
 }
