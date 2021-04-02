@@ -38,7 +38,9 @@ namespace WEBServer.Server
             services.AddTransient<IDatabaseAccessor, MySQLDatabaseAccessor>();
             services.AddTransient<IFlowService, ADOFlowService>();
             services.AddTransient<ICompanyService,ADOCompanyService>();
-
+            services.AddTransient<IMovementsService,ADOMovementsService>();
+            services.AddTransient<IDeviceService,ADODeviceService>();
+            
             services.ConfigureApplicationCookie(options =>
             {
                 options.Cookie.HttpOnly = false;

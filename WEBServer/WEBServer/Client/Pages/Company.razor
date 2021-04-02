@@ -2,16 +2,86 @@
 @inject NavigationManager navigationManager
 @inject CustomStateProvider authStateProvider
 @inject ICompanyService companyService
+@inject IJSRuntime JsRuntime
 
 <h1>@company.BusinessName</h1>
+<form>
+  <div class="row">
+    <div class="col-6">
+      <div class="form-group">
+        <label for="addr">Indirizzo</label>
+        <input type="text" class="form-control" id="addr" disabled @bind="company.Address" placeholder="" name="addr">
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="form-group">
+        <label for="pcode">Codice Postale</label>
+        <input type="text" class="form-control" id="pcode" @bind="company.PostalCode" placeholder="" name="pcode">
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="form-group">
+        <label for="city">Città</label>
+        <input type="text" class="form-control" id="city" @bind="company.City" placeholder="" name="city">
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="form-group">
+        <label for="odate">Orario di apertura</label>
+        <input type="text" class="form-control" id="odate" @bind="company.Opening" placeholder="" name="odate">
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="form-group">
+        <label for="cdate">Orario di chiusura</label>
+        <input type="text" class="form-control" id="cdate" @bind="company.Closing" placeholder="" name="cdate">
+      </div>
+    </div>
+  </div>
+</form>
+
+<button class="btn btn-lg btn-primary btn-block" @onclick="ShowModal">Inserisci dispositivo</button>
+
+<div class="row">
+  <div class="col-4">
+    <div class="table-wrapper-scroll-y my-custom-scrollbar" style="width: 60px">
+
+      <table class="table table-bordered table-striped mb-0">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Dispositivo</th>
+            <th scope="col">Ultimo accesso</th>
+          </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+</div>
+
 
 @code{
-    [Parameter]
-    public string ID { get; set; }
-    public WEBServer.Shared.Company company { get; set; } = new WEBServer.Shared.Company();
-    protected override async Task OnInitializedAsync()
-    {
-        company = await companyService.GetCompanyAsync(int.Parse(ID));
-    }
+  [Parameter]
+  public string ID { get; set; }
+  public WEBServer.Shared.Company company { get; set; } = new WEBServer.Shared.Company();
+  protected override async Task OnInitializedAsync()
+  {
+  }
+
+  public async Task ShowModal()
+  {
+    string otp_code = await JsRuntime.InvokeAsync<string>("prompt", "Inserisci il codice di verifica");
+    Console.WriteLine("OTP : " + otp_code);
+    
+  }
+  protected override async Task OnParametersSetAsync()
+  {
+    company = await companyService.GetCompanyAsync(int.Parse(ID));
+
+  }
 
 }

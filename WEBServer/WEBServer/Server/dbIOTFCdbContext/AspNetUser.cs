@@ -9,8 +9,11 @@ namespace WEBServer.Server.dbIOTFCdbContext
     {
         public AspNetUser()
         {
-
-            //UserLocations = new HashSet<UserLocation>();
+            AspNetUserClaims = new HashSet<AspNetUserClaim>();
+            AspNetUserLogins = new HashSet<AspNetUserLogin>();
+            AspNetUserRoles = new HashSet<AspNetUserRole>();
+            AspNetUserTokens = new HashSet<AspNetUserToken>();
+            UserLocations = new HashSet<UserLocation>();
         }
 
         public string Id { get; set; }
@@ -27,6 +30,11 @@ namespace WEBServer.Server.dbIOTFCdbContext
         public bool TwoFactorEnabled { get; set; }
         public bool LockoutEnabled { get; set; }
         public int AccessFailedCount { get; set; }
+
+        public virtual ICollection<AspNetUserClaim> AspNetUserClaims { get; set; }
+        public virtual ICollection<AspNetUserLogin> AspNetUserLogins { get; set; }
+        public virtual ICollection<AspNetUserRole> AspNetUserRoles { get; set; }
+        public virtual ICollection<AspNetUserToken> AspNetUserTokens { get; set; }
         public virtual ICollection<UserLocation> UserLocations { get; set; }
     }
 }

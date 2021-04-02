@@ -1,56 +1,170 @@
-﻿@page "/registercompany"
+﻿@page "/managecompany/{id}"
+@using GoogleMapsComponents
+@using GoogleMapsComponents.Maps
 @inject NavigationManager navigationManager
 @inject CustomStateProvider authStateProvider
 @inject ICompanyService companyService
+@inject IPlaceConverter placeConverter
 
-<h1>Inserisci attivita</h1>
+<div class="content col-md-5 mx-auto">
+    <h1 class="h2 font-weight-normal login-title text-center mb-4 mt-1">
+        Inserisci Attività
+    </h1>
 
-<EditForm class="form-signin" OnValidSubmit="OnSubmit" Model="company">
-    <DataAnnotationsValidator />
-    @* <label for="inputUsername" class="sr-only">User Name</label> *@
-    <InputText id="businessname" class="form-control m-3" placeholder="Nome Azienda" autofocus
-               @bind-Value="@company.BusinessName" />
-    <ValidationMessage For="@(() => company.BusinessName)" />
-    @* <label for="inputPassword" class="sr-only">Password</label> *@
-    <InputText id="address" class="form-control m-3" placeholder="Indirizzo"
-               @bind-Value="@company.Address" />
-    <ValidationMessage For="@(() => company.Address)" />
-    @* <label for="inputPasswordConfirm" class="sr-only">Password Confirmation</label> *@
-    <InputText id="city" class="form-control m-3" placeholder="Città"
-               @bind-Value="@company.City" />
-    <ValidationMessage For="@(() => company.City)" />
-    <InputText id="city" class="form-control m-3" placeholder="Cod. Postale"
-               @bind-Value="@company.PostalCode" />
-    <ValidationMessage For="@(() => company.PostalCode)" />
-    
-    <ValidationMessage For="@(() => company.Opening)" />
-    <button class="btn btn-lg btn-primary btn-block col-md-4 mx-auto" type="submit">Crea</button>
-    <label class="text-danger">@error</label>
+    <EditForm class="form-signin" OnValidSubmit="OnSubmit" Model="company">
+        <DataAnnotationsValidator />
+        <InputText id="businessname" class="form-control m-3" placeholder="Nome Azienda" autofocus
+            @bind-Value="@company.BusinessName" />
+        <ValidationMessage For="@(() => company.BusinessName)" />
+        <InputText id="address" class="form-control m-3" placeholder="Indirizzo" @bind-Value="@company.Address"
+            @onblur="AddressChangedAsync" />
+        <ValidationMessage For="@(() => company.Address)" />
+        <InputText id="city" class="form-control m-3" placeholder="Città" @bind-Value="@company.City"
+            @onblur="AddressChangedAsync" />
+        <ValidationMessage For="@(() => company.City)" />
+        <InputText id="postalcode" class="form-control m-3" placeholder="Cod. Postale" @bind-Value="@company.PostalCode"
+            @onblur="AddressChangedAsync" />
+        <ValidationMessage For="@(() => company.PostalCode)" />
 
-</EditForm>
+        <InputText id="opening" class="form-control m-3" placeholder="Orario apertura (HH:mm)"
+            @bind-Value="@company.Opening" @onblur="AddressChangedAsync" />
+        <ValidationMessage For="@(() => company.Opening)" />
+
+        <InputText id="closing" class="form-control m-3" placeholder="Orario chiusura (HH:mm)"
+            @bind-Value="@company.Closing" @onblur="AddressChangedAsync" />
+        <ValidationMessage For="@(() => company.Closing)" />
+
+        <GoogleMap @ref="@map2" Id="map2" Options="@mapOptions"  OnAfterInit="@(async () => await OnAfterInitAsync())"></GoogleMap>
+
+        <button class="btn btn-lg btn-primary btn-block col-md-4 mx-auto" type="submit">Crea</button>
+        <label class="text-danger">@error</label>
+
+    </EditForm>
 
 
-@functions{
-    
-    public WEBServer.Shared.Company company { get; set; } = new WEBServer.Shared.Company();
+</div>
+
+
+
+
+@code{
+    public WEBServer.Client.Models.ViewModels.CompanyViewModel company { get; set; }
     string error { get; set; }
-   
+
+    bool validLocation { get; set; }
+
+    private GoogleMap map2;
+    private MapOptions mapOptions;
+    private Marker marker;
+
+    [Parameter]
+    public string ID { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try{
+
+        company = new WEBServer.Client.Models.ViewModels.CompanyViewModel();
+                        
+         var latlng = new LatLngLiteral(12.201383, 43.062410);
+
+        mapOptions = new MapOptions()
+        {
+            Zoom = 10,
+            Center = latlng,
+            MapTypeId = MapTypeId.Roadmap,
+            DisableDefaultUI = true
+
+        };
+
+        }catch(Exception e){
+            Console.WriteLine(e.Message);
+        }
+
+    }
+
+    private async Task OnAfterInitAsync()
+    {
+       
+
+
+        if (int.TryParse(ID, out int i))
+        {
+            var companyServer = await companyService.GetCompanyAsync(i);
+
+            if (companyServer != null)
+            {
+                company.IdLocation = companyServer.IdLocation;
+                company.BusinessName = companyServer.BusinessName;
+                company.Address = companyServer.Address;
+                company.City = companyServer.City;
+                company.PostalCode = companyServer.PostalCode;
+                company.Latitude = companyServer.Latitude;
+                company.Longitude = companyServer.Longitude;
+                company.Opening =
+                    DateTime.ParseExact(companyServer.Opening.ToString().PadLeft(4, '0'), "HHmm",
+                    System.Globalization.CultureInfo.CurrentCulture).ToString("HH:mm");
+                company.Closing =
+                    DateTime.ParseExact(companyServer.Closing.ToString().PadLeft(4, '0'), "HHmm",
+                    System.Globalization.CultureInfo.CurrentCulture).ToString("HH:mm");
+
+                await AddressChangedAsync(null);
+            }
+
+        }
+    }
+
     async Task OnSubmit()
     {
+        //await GetLocation();
         //Logica validazione lato client
 
         error = null;
         try
         {
+            if (!validLocation)
+                throw new Exception("L'indirizzo non è valido. Riprovare.");
+
             await companyService.RegisterCompany(company);
-            navigationManager.NavigateTo("");
+            navigationManager.NavigateTo("",true);
         }
         catch (Exception ex)
         {
             error = ex.Message;
         }
     }
-}
+
+    private async Task AddressChangedAsync(EventArgs args)
+    {
+
+        if (marker != null)
+            await marker.SetMap(null);
+
+        try
+        {
+            var coord = await placeConverter.GetPlaceAsync(company.Address, company.PostalCode, company.City);
+
+            var latlng = new LatLngLiteral(coord.Longitude, coord.Latitude);
+
+            marker = await Marker.CreateAsync(map2.JsRuntime, new MarkerOptions()
+            {
+                Position = latlng,
+                Map = map2.InteropObject,
+            });
+
+            await map2.InteropObject.PanTo(latlng);
+
+            validLocation = true;
+
+            company.Latitude = coord.Latitude;
+            company.Longitude = coord.Longitude;
+        }
+        catch
+        {
+            validLocation = false;
+        }
+    }
+
 
 
 

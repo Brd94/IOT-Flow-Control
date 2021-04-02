@@ -7,8 +7,13 @@ namespace WEBServer.Server.Models
     public interface ICompanyService
     {
          
-        public IEnumerable<Company> GetCompanies(string ID_User);
+        public IEnumerable<Company> GetCompanies(CompanyFilter filter);
+        
         public Company GetCompany(int ID);
-        public void RegisterCompany(Company company);
+        public int RegisterCompany(Company company);
+
+        public void UpdateCompany(Company company);
+
+        public int BindCompanyToUser(int ID_Company,string ID_User);
     }
 }

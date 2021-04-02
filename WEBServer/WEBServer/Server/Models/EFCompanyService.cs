@@ -16,25 +16,16 @@ namespace WEBServer.Server.Models
             this.db = db;
         }
 
-        public IEnumerable<Company> GetCompanies(string ID_User)
+        public int BindCompanyToUser(int ID_Company, string ID_User)
         {
-            // return db.UserLocations
-            // .Where(x=>x.IdUser == ID_User)
-            // .Select(x => new Company
-            // {
-            //     IdLocation = x.IdLocationNavigation.IdLocation,
-            //     BusinessName = x.IdLocationNavigation.BusinessName,
-            //     Address = x.IdLocationNavigation.Address,
-            //     PostalCode = x.IdLocationNavigation.PostalCode,
-            //     City = x.IdLocationNavigation.City,
-            //     Opening = x.IdLocationNavigation.Opening,
-            //     Closing = x.IdLocationNavigation.Closing
-
-            // });
-            return null;
+            throw new System.NotImplementedException();
         }
 
-    
+
+        public IEnumerable<Company> GetCompanies(CompanyFilter filter)
+        {
+            throw new System.NotImplementedException();
+        }
 
         public Company GetCompany(int ID)
         {
@@ -53,7 +44,12 @@ namespace WEBServer.Server.Models
             }).FirstOrDefault();
         }
 
-        public void RegisterCompany(Company company)
+        public int RegisterCompany(Company company)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void UpdateCompany(Company company)
         {
             throw new System.NotImplementedException();
         }

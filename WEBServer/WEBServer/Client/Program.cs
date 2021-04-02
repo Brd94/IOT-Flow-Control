@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using WEBServer.Client.ViewModel;
 using Microsoft.AspNetCore.Components.Authorization;
 using WEBServer.Client.Services;
 
@@ -27,6 +26,7 @@ namespace WEBServer.Client
             builder.Services.AddScoped<AuthenticationStateProvider>(s => s.GetRequiredService<CustomStateProvider>());
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ICompanyService, CompanyService>();
+            builder.Services.AddScoped<IPlaceConverter, MapquestPlaceConverter>();
 
 
             builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });

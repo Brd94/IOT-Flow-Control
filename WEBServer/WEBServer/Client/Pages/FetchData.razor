@@ -1,14 +1,14 @@
 ﻿@page "/fetchdata"
 @using WEBServer.Shared
-@inject HttpClient Http
+@inject ICompanyService companyService
 
 <h1>Rilevazioni</h1>
 
 <p>In questa pagina è possibile consultare tutte le rilevazioni.</p>
 
-@if (flows == null)
+@if (companies == null)
 {
-    <p><em>Loading...</em></p>
+    <p><em>Caricamento...</em></p>
 }
 else
 {
@@ -17,18 +17,18 @@ else
             <tr>
                 <th>Nome</th>
                 <th>Persone rilevate</th>
+                <th>Orario</th>
                 <th>Ultimo aggiornamento</th>
-                <th>Info</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var flow in flows)
+            @foreach (var company in companies)
             {
                 <tr>
-                    <td>@flow.Name</td>
-                    <td>@flow.PeopleNumber</td>
-                    <td>@flow.LastUpdate</td>
-                    <td>@flow.Info</td>
+                    <td>@company.BusinessName</td>
+                    <td>@company.PeopleCount</td>
+                    <td>@(company.Opening + " - " + company.Closing)</td>
+                    <td>@DateTime.Now</td>
                 </tr>
             }
         </tbody>
@@ -36,11 +36,11 @@ else
 }
 
 @code {
-    private FlowData[] flows;
+    private IEnumerable<WEBServer.Shared.Company> companies;
 
     protected override async Task OnInitializedAsync()
     {
-        flows = await Http.GetFromJsonAsync<FlowData[]>("FlowData");
+        companies = await companyService.GetCompaniesAsync(new CompanyFilter());
     }
 
 }

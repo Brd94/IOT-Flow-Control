@@ -15,9 +15,11 @@ namespace WEBServer.Client.Services
         {
             this.httpClient = httpClient;
         }
-        public async Task<IEnumerable<Company>> GetCompaniesAsync()
+        public async Task<IEnumerable<Company>> GetCompaniesAsync(CompanyFilter filter)
         {
-            return await httpClient.GetFromJsonAsync<IEnumerable<Company>>("api/company/getcompanies");
+            var response = await httpClient.PostAsJsonAsync<CompanyFilter>("api/company/getcompanies",filter);
+            System.Console.WriteLine("RES : " + await response.Content.ReadAsStringAsync());
+            return await response.Content.ReadFromJsonAsync<IEnumerable<Company>>();
         }
 
         public async Task<Company> GetCompanyAsync(int ID)

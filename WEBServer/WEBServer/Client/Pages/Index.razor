@@ -4,18 +4,21 @@
 @using Microsoft.JSInterop;
 @using System.Threading.Tasks;
 @inject IJSRuntime JS;
+@inject ICompanyService companyService
+
 
 <div>
-
-
-    <GoogleMap @ref="@map1" Id="map1" Options="@mapOptions"></GoogleMap>
+    <GoogleMap @ref="@map1" Id="map1" Options="@mapOptions" OnAfterInit="@(async () => await OnAfterInitAsync())">
+    </GoogleMap>
 </div>
 
 
 
-@functions {
+@code{
     private GoogleMap map1;
     private MapOptions mapOptions;
+
+    private List<Marker> markers = new List<Marker>();
 
     protected override void OnInitialized()
     {
@@ -31,23 +34,77 @@
             },
             MapTypeId = MapTypeId.Roadmap,
             DisableDefaultUI = true
-             
+
         };
 
 
     }
 
-
-}
-@code{
-    public int Height { get; set; }
-
-    @* protected override async Task OnInitializedAsync()
+    protected override void OnAfterRender(bool firstRender)
     {
-        await base.OnInitializedAsync();
 
-    } *@
+    }
 
+    private async Task OnAfterInitAsync()
+    {
+        await map1.InteropObject.AddListener("bounds_changed", async () => await BoundsChanged());
+
+        var companies = await companyService.GetCompaniesAsync(new CompanyFilter());
+
+        foreach (var marker in markers)
+            await marker.SetMap(null);
+
+        markers.Clear();
+
+
+
+
+        foreach (var company in companies)
+        {
+            var latlng = new LatLngLiteral(company.Longitude, company.Latitude);
+
+            var marker = await Marker.CreateAsync(map1.JsRuntime, new MarkerOptions()
+            {
+                Animation = Animation.Drop,
+                Icon = new Symbol()
+                {
+                    Path = "M 0 16 L -20 8 L 20 8 L 0 16",
+                    FillColor = "red",
+                    FillOpacity = 0.6f,
+                    StrokeWeight = 0,
+                    Rotation = 0,
+                    Scale = 2,
+                },
+                Label = new MarkerLabel()
+                {
+                    Color = "red",
+                    FontSize = "15px",
+                    FontWeight = "bold",
+                    Text = company.BusinessName + " - Persone : " + company.PeopleCount
+                },
+                Clickable = true,
+                Position = latlng,
+                Map = map1.InteropObject,
+            });
+
+            await marker.AddListener("click", async () => await MarkerClick());
+            markers.Add(marker);
+        }
+
+    }
+
+
+    protected async Task MarkerClick()
+    {
+
+    }
+
+
+    protected async Task BoundsChanged()
+    {
+        var bounds = await map1.InteropObject.GetBounds();
+        Console.WriteLine("Bounds changed : {0} - {1} - {2} - {3}", bounds.North, bounds.East, bounds.South, bounds.West);
+    }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await getHeight();
@@ -56,7 +113,7 @@
 
     public async Task getHeight()
     {
-        Height = await JS.InvokeAsync<int>("returnHeigth");
+        await JS.InvokeAsync<int>("returnHeigth");
     }
 
 }

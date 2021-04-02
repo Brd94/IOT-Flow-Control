@@ -37,16 +37,26 @@ namespace WEBServer.Server.Controllers
         }
 
         //[Authorize]
-        [HttpGet]
-        public IEnumerable<Company> GetCompanies()
+        [HttpPost]
+        public IEnumerable<Company> GetCompanies(CompanyFilter filter)
         {
-            return companyService.GetCompanies(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            return companyService.GetCompanies(filter);
         }
 
+        [Authorize]
         [HttpPost]
         public IActionResult RegisterCompany(Company company)
         {
-            companyService.RegisterCompany(company);
+            if (company.IdLocation > 0)
+            {
+                companyService.UpdateCompany(company);
+            }
+            else
+            {
+                int inserted = companyService.RegisterCompany(company);
+                companyService.BindCompanyToUser(inserted, User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            }
+
             return Ok();
         }
 
