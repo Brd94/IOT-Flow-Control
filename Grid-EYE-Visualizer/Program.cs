@@ -95,26 +95,55 @@ namespace Grid_EYE_Visualizer
 
                     var matrix = ProcessMatrix(MatrixString);
                     matrixHistory.AddMatrix(matrix);
-                    //PrintMatrix(matrix);
+                    float[,] interpolated = Interpolation.BicubicInterpolation(matrix, 32, 32);
+                    //PrintMatrix(interpolated, 32, 32);
                     if (baseCount < 50)
                     {
-                        matrixBase.AddMatrix(matrix);
+                        matrixBase.AddMatrix(interpolated);
                         Console.WriteLine("Calcolando Base... ({0})", baseCount);
                         baseCount++;
                         //return;
                     }
                     else
+
+
                         Console.WriteLine("Base piena");
 
                     // var comparison = CompareMatrixes(matrix,matrix_history);
 
-                    var matrix_max_base = MatrixArray<float>.ApplyOperation<float>(x =>
+                    var matrix_med_base = MatrixArray<float>.ApplyOperation<float>(x =>
                     {
-                        return System.Linq.Enumerable.Max(x);
-                    }, matrixBase.getLastMatrixes());
+                        return System.Linq.Enumerable.Average(x);
+                    }, matrixBase.getLastMatrixes(), 32, 32);
 
+                    var matrix_std_base = MatrixArray<float>.ApplyOperation<float>((x, i, j) =>
+                    {
+                        // var std_elements = new float[x.Length,1];
 
+                        // for(int i=0;i<x.Length;i++){
+                        //     std_elements[i,0] = x[i];
+                        // }
 
+                        // return (float)getMatrix_VAR(std_elements,x.Length,1);
+                        double sigma = 0;
+
+                        for (int k = 0; k < x.Length; k++)
+                        {
+                            sigma += Math.Pow(x[k] - matrix_med_base[i, j], 2);
+                        }
+
+                        return (float)Math.Sqrt(sigma / x.Length);
+
+                    }, matrixBase.getLastMatrixes(), 32, 32);
+
+                    var matrix_without_background = MatrixArray<float>.ApplyOperation<float>(x =>
+                    {
+                        return x[2] > x[0] + (4 * x[1]) ? 1 : 0;
+                    }, new[] { matrix_med_base, matrix_std_base, interpolated }, 32, 32);
+
+                    PrintMatrix(matrix_without_background, 32, 32);
+
+                    //PrintMatrix(matrix_std_base,32,32);
                     // var matrix_media_base = MatrixArray<float>.ApplyOperation<float>(x =>
                     //     {
                     //         return System.Linq.Enumerable.Average(x);
@@ -167,12 +196,12 @@ namespace Grid_EYE_Visualizer
 
                     var MatrixCmpThreshold = MatrixArray<float>.ApplyOperation<float>(x =>
                     {
-                        var diff = x[1] - x[0] ;
-                        return Math.Abs(diff) > 5? diff: 0;
+                        var diff = x[1] - x[0];
+                        return Math.Abs(diff) > 2 ? 1 : 0;
 
-                    }, new[] { matrix_max_base, matrixHistory.getLastInsertedMatrix() });
+                    }, new[] { matrix_med_base, matrixHistory.getLastInsertedMatrix() });
 
-                    var MatrixCmpPoints = GetMatrix_Points(MatrixCmpThreshold, 8, 8);
+                    //var MatrixCmpPoints = GetMatrix_Points(MatrixCmpThreshold, 8, 8);
                     // var MatrixCmp = MatrixArray<float>.ApplyOperation<float>(x =>
                     // {
 
@@ -192,9 +221,10 @@ namespace Grid_EYE_Visualizer
                     //    return x[0] >= x[1] ? 0 : 1;
 
                     // }, new[] { matrix_std_base, MatrixCmp });
-                    PrintMatrix(MatrixCmpPoints);
+                    //PrintMatrix(MatrixCmpPoints);
 
                     //PrintMatrix_C(matrixHistory.getLastInsertedMatrix());
+
                     Console.WriteLine("\n\nMeasureTime = " + stopWatch.ElapsedMilliseconds);
 
 
@@ -207,7 +237,7 @@ namespace Grid_EYE_Visualizer
                 MatrixString += read + Environment.NewLine;
 
             }
-            catch (Exception e) { Console.WriteLine("Errore : " + e.Message); }
+            catch (Exception e) { Console.WriteLine("Errore : " + e.ToString()); }
         }
 
         /*
@@ -274,7 +304,7 @@ namespace Grid_EYE_Visualizer
         {
             float[,] res = new float[x, y];
 
-              
+
 
             float maxval = 0;
 
@@ -296,8 +326,8 @@ namespace Grid_EYE_Visualizer
 
             if (max_i >= 0 && max_j >= 0)
             {
-                SetMatrix_Points_Intorno(matrix, x, y, max_i, max_j,0);
-                SetMatrix_Points_Intorno(res,x,y,max_i,max_j,1);
+                SetMatrix_Points_Intorno(matrix, x, y, max_i, max_j, 0);
+                SetMatrix_Points_Intorno(res, x, y, max_i, max_j, 1);
             }
 
             return res;
@@ -321,7 +351,7 @@ namespace Grid_EYE_Visualizer
             return iCountMagg == 0;
         }
 
-        private static void SetMatrix_Points_Intorno(float[,] matrix, int x, int y, int px, int py,int val)
+        private static void SetMatrix_Points_Intorno(float[,] matrix, int x, int y, int px, int py, int val)
         {
             int iCountMagg = 0;
 
@@ -337,11 +367,11 @@ namespace Grid_EYE_Visualizer
 
 
 
-        private static void PrintMatrix(float[,] matrix)
+        private static void PrintMatrix(float[,] matrix, int x = 8, int y = 8)
         {
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < x; i++)
             {
-                for (int j = 0; j < 8; j++)
+                for (int j = 0; j < y; j++)
                 {
                     //Console.Write(matrix[i, j].ToString("N2"));
                     if (matrix[i, j] > 0)
