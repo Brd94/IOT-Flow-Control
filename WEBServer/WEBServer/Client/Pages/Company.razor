@@ -1,87 +1,193 @@
 ﻿@page "/company/{id}"
+
 @inject NavigationManager navigationManager
 @inject CustomStateProvider authStateProvider
 @inject ICompanyService companyService
 @inject IJSRuntime JsRuntime
+@inject IDevicesService devicesService
 
-<h1>@company.BusinessName</h1>
-<form>
-  <div class="row">
-    <div class="col-6">
-      <div class="form-group">
-        <label for="addr">Indirizzo</label>
-        <input type="text" class="form-control" id="addr" disabled @bind="company.Address" placeholder="" name="addr">
-      </div>
-    </div>
-    <div class="col-6">
-      <div class="form-group">
-        <label for="pcode">Codice Postale</label>
-        <input type="text" class="form-control" id="pcode" @bind="company.PostalCode" placeholder="" name="pcode">
-      </div>
-    </div>
-    <div class="col-6">
-      <div class="form-group">
-        <label for="city">Città</label>
-        <input type="text" class="form-control" id="city" @bind="company.City" placeholder="" name="city">
-      </div>
-    </div>
-    <div class="col-6">
-      <div class="form-group">
-        <label for="odate">Orario di apertura</label>
-        <input type="text" class="form-control" id="odate" @bind="company.Opening" placeholder="" name="odate">
-      </div>
-    </div>
-    <div class="col-6">
-      <div class="form-group">
-        <label for="cdate">Orario di chiusura</label>
-        <input type="text" class="form-control" id="cdate" @bind="company.Closing" placeholder="" name="cdate">
-      </div>
-    </div>
-  </div>
-</form>
 
-<button class="btn btn-lg btn-primary btn-block" @onclick="ShowModal">Inserisci dispositivo</button>
 
-<div class="row">
-  <div class="col-4">
-    <div class="table-wrapper-scroll-y my-custom-scrollbar" style="width: 60px">
 
-      <table class="table table-bordered table-striped mb-0">
-        <thead>
-          <tr>
-            <th scope="col">#</th>
-            <th scope="col">Dispositivo</th>
-            <th scope="col">Ultimo accesso</th>
-          </tr>
-        </thead>
-        <tbody>
+<div class="content col-md-6 mx-auto">
 
-        </tbody>
-      </table>
+
+    <h1>@company.BusinessName</h1>
+    <form>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="addr">Indirizzo</label>
+                    <input type="text" class="form-control" id="addr" disabled @bind="company.Address" placeholder="" name="addr">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="pcode">Codice Postale</label>
+                    <input type="text" class="form-control" id="pcode" disabled @bind="company.PostalCode" placeholder="" name="pcode">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="city">Città</label>
+                    <input type="text" class="form-control" id="city" disabled @bind="company.City" placeholder="" name="city">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="odate">Orario di apertura</label>
+                    <input type="text" class="form-control" id="odate" disabled @bind="company.Opening" placeholder="" name="odate">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="cdate">Orario di chiusura</label>
+                    <input type="text" class="form-control" id="cdate" disabled @bind="company.Closing" placeholder="" name="cdate">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <button class="btn btn-lg btn-primary " style="margin-top:25px" @onclick="Edit">Modifica</button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <button class="btn btn-lg btn-danger" style="margin-top:25px" @onclick="Delete">Elimina</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <button class="btn btn-lg btn-primary btn-block" style="margin-top:25px" @onclick="ShowModal">Inserisci dispositivo</button>
+
+    <div style="overflow-y:auto;height:300px;margin-top:30px">
+
+        @if (devices == null || !devices.Any())
+        {
+            <label>Nessun dispositivo disponibile.</label>
+
+        }
+        else
+        {
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Dispositivo</th>
+                        <th scope="col">Ultimo accesso</th>
+                        <th scope="col">  </th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        int i = 1;
+                        foreach (var device in devices)
+                        {
+                            <tr>
+                                <th scope="row">@i</th>
+                                <td>ESP32 con sensore GridEye</td>
+                                <td>@DateTime.Now</td>
+                                <td>
+                                    <button class="btn btn-lg btn-danger" style="width:40px;height:40px;padding:0px;padding-left:3px" @onclick="() => DeleteBind(device)"><span style="font-size:16px" class="oi oi-trash"></span></button>
+                                    <button class="btn btn-lg btn-info" style="width:40px;height:40px;padding:0px;padding-left:3px" @onclick="() => DeleteBind(device)"><span style="font-size:16px" class="oi oi-list"></span></button>
+
+                                </td>
+                            </tr>
+
+                            i++;
+                        }
+                    }
+                </tbody>
+            </table>
+
+        }
+
 
     </div>
-  </div>
 </div>
 
-
 @code{
-  [Parameter]
-  public string ID { get; set; }
-  public WEBServer.Shared.Company company { get; set; } = new WEBServer.Shared.Company();
-  protected override async Task OnInitializedAsync()
-  {
-  }
 
-  public async Task ShowModal()
-  {
-    string otp_code = await JsRuntime.InvokeAsync<string>("prompt", "Inserisci il codice di verifica");
-    Console.WriteLine("OTP : " + otp_code);
-    
-  }
-  protected override async Task OnParametersSetAsync()
-  {
-    company = await companyService.GetCompanyAsync(int.Parse(ID));
 
-  }
+    [Parameter]
+    public string ID { get; set; }
+
+    public CompanyViewModel company { get; set; } = new CompanyViewModel();
+    public IEnumerable<Device> devices;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+
+    }
+
+    public async Task ShowModal()
+    {
+        string otp_code = await JsRuntime.InvokeAsync<string>("prompt", "Inserisci il codice di verifica");
+
+        try
+        {
+            await devicesService.SetBinding(new DeviceRegisterRequest() { OTP_Key = otp_code, Location = company.IdLocation });
+            devices = await devicesService.GetAllBindedToCompany(company.IdLocation);
+        }
+        catch (Exception e)
+        {
+            await JsRuntime.InvokeVoidAsync("alert", e.Message);
+        }
+    }
+
+    public async Task Edit()
+    {
+
+        navigationManager.NavigateTo("/managecompany/" + company.IdLocation);
+    }
+
+    public async Task Delete()
+    {
+        await JsRuntime.InvokeVoidAsync("alert", "Non ancora implementato!");
+
+    }
+
+    public async Task DeleteBind(Device device)
+    {
+        try
+        {
+            await devicesService.SetBinding(new DeviceRegisterRequest() { Device = device.ID_Device,Location = 0,InstallationType = InstallationType.Remove });
+            devices = await devicesService.GetAllBindedToCompany(company.IdLocation);
+        }
+        catch (Exception e)
+        {
+            await JsRuntime.InvokeVoidAsync("alert", e.Message);
+        }
+    }
+
+    public async Task DeviceInfo(Device device)
+    {
+
+        await JsRuntime.InvokeVoidAsync("alert", "Non ancora implementato!");
+
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var companyServer = await companyService.GetCompanyAsync(int.Parse(ID));
+
+        company.IdLocation = companyServer.IdLocation;
+        company.BusinessName = companyServer.BusinessName;
+        company.Address = companyServer.Address;
+        company.City = companyServer.City;
+        company.PostalCode = companyServer.PostalCode;
+        company.Latitude = companyServer.Latitude;
+        company.Longitude = companyServer.Longitude;
+        company.Opening =
+            DateTime.ParseExact(companyServer.Opening.ToString().PadLeft(4, '0'), "HHmm",
+            System.Globalization.CultureInfo.CurrentCulture).ToString("HH:mm");
+        company.Closing =
+            DateTime.ParseExact(companyServer.Closing.ToString().PadLeft(4, '0'), "HHmm",
+            System.Globalization.CultureInfo.CurrentCulture).ToString("HH:mm");
+
+
+        devices = await devicesService.GetAllBindedToCompany(company.IdLocation);
+    }
 
 }

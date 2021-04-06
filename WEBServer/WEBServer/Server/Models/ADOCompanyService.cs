@@ -28,7 +28,7 @@ namespace WEBServer.Server.Models
             // AND Longitude<={filter.filterLongitudeEnd}";
 
 
-            FormattableString SQL = $@"SELECT * FROM LocationInfo";
+            FormattableString SQL = $@"SELECT * FROM LocationInfo WHERE STATUS <> 0";
 
 
             DataSet data = db.Query(SQL);
@@ -52,7 +52,7 @@ namespace WEBServer.Server.Models
 
         public Company GetCompany(int ID)
         {
-            FormattableString SQL = $"SELECT * FROM LocationInfo WHERE ID_Location = {ID}";
+            FormattableString SQL = $"SELECT * FROM LocationInfo WHERE ID_Location = {ID} AND Status <> 0";
 
             DataSet data = db.Query(SQL);
 

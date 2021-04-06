@@ -27,7 +27,7 @@ namespace WEBServer.Client
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ICompanyService, CompanyService>();
             builder.Services.AddScoped<IPlaceConverter, MapquestPlaceConverter>();
-
+            builder.Services.AddScoped<IDevicesService, DeviceService>();
 
             builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
             

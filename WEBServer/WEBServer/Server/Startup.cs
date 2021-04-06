@@ -40,7 +40,8 @@ namespace WEBServer.Server
             services.AddTransient<ICompanyService,ADOCompanyService>();
             services.AddTransient<IMovementsService,ADOMovementsService>();
             services.AddTransient<IDeviceService,ADODeviceService>();
-            
+            services.AddTransient<IProbeService, ADOProbeService>();
+
             services.ConfigureApplicationCookie(options =>
             {
                 options.Cookie.HttpOnly = false;

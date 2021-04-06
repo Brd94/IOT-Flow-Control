@@ -24,16 +24,14 @@ namespace WEBServer.Server.Models
 
         public IEnumerable<Device> GetCurrentBind(int idCompany)
         {
-            FormattableString SQL = $"SELECT m1.* FROM `Movements` m1 WHERE ID_Location_FK={idCompany} AND m1.Movement_Date = (SELECT MAX(m2.Movement_Date) FROM `Movements` m2 WHERE m1.ID_Device_FK = m2.ID_Device_FK) ";
-
-            db.Query(SQL);
+            FormattableString SQL = $"SELECT m1.ID_Device_FK FROM Movements m1 WHERE ID_Location_FK = {idCompany} AND m1.Movement_Date = (SELECT MAX(m2.Movement_Date) FROM Movements m2 WHERE m1.ID_Device_FK = m2.ID_Device_FK) ";
 
             DataSet data = db.Query(SQL);
 
             foreach(DataRow dr in data.Tables[0].Rows)
             {
                 yield return new Device(){
-                    ID_Device = dr.Field<int>("ID_Device")
+                    ID_Device = dr.Field<int>("ID_Device_FK")
                 };
             }
         }

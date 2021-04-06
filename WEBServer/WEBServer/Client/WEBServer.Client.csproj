@@ -8,6 +8,10 @@
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'WEBServer' ">
     <ExternalConsole>true</ExternalConsole>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Pages\MainLayout.razor.css" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BlazorGoogleMaps" Version="1.0.13" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="5.0.3" />

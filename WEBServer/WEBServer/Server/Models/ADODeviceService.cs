@@ -17,8 +17,6 @@ namespace WEBServer.Server.Models
         {
             FormattableString SQL = $"SELECT * FROM DeviceInfo WHERE OTP_Key={otp}";
 
-            db.Query(SQL);
-
             DataSet data = db.Query(SQL);
 
             if (data.Tables[0].Rows.Count == 0)

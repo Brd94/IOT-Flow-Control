@@ -13,18 +13,25 @@
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
     <!-- <link rel="stylesheet" href="css/font-awesome/css/all.min.css" /> -->
     <script type="text/javascript"
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBdkgvniMdyFPAcTlcZivr8f30iU-kn1T0&v=3"></script>
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBdkgvniMdyFPAcTlcZivr8f30iU-kn1T0&v=3">
+    </script>
     <script>
         window.returnHeigth = () => {
             document.getElementById("map1").style.height = document.body.scrollHeight+"px";
             return screen.height;
         }
-
+    </script>
+    <script>
+        window.showModalDevice = () => {
+            var myModal = document.getElementById('modalDevice')
+            myModal.show();
+            return 1;
+        }
     </script>
 </head>
 
 <body>
-    <div id="app">Loading...</div>
+    <div id="app">Caricamento...</div>
 
     <div id="blazor-error-ui">
         Si è verificato un errore durante il recupero dei dati.

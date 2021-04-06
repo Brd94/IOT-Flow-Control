@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -14,32 +15,48 @@ namespace WEBServer.Server.Controllers
     {
         private readonly IDeviceService deviceService;
         private readonly IMovementsService movementsService;
+        private readonly IProbeService probeService;
 
-        public DevicesController(IDeviceService deviceService, IMovementsService movementsService)
+        public DevicesController(IDeviceService deviceService, IMovementsService movementsService,IProbeService probeService)
         {
             this.deviceService = deviceService;
             this.movementsService = movementsService;
+            this.probeService = probeService;
         }
 
         [Authorize]
         [HttpPost]
-        public IActionResult RegisterDevice(DeviceRegisterRequest request)
+        public IActionResult SetBinding(DeviceRegisterRequest request)
         {
-            var device = deviceService.GetDevice(request.OTP_Key);
+            int? device = request.Device;
+
+            if (!request.Device.HasValue)
+                device = deviceService.GetDevice(request.OTP_Key)?.ID_Device ?? null;
             
             if (device != null)
             {
-                movementsService.CreateMovent(device.ID_Device, request.CurrentLocation);
+                movementsService.CreateMovent(device.Value, request.Location ,(int)request.InstallationType);
                 return Ok();
             }
-            return Unauthorized();
+            else
+            {
+                return BadRequest("OTP Key non valida!");
+            }
         }
 
         //[Authorize]
         [HttpGet]
-        public IEnumerable<Device> GetBindedLocation(string location)
+        public IEnumerable<Device> GetBindedLocation(int location)
         {
-            return movementsService.GetCurrentBind(int.Parse(location));
+            //Controllare,oltre all'autorizzazione,l'abilitazione alla visualizzazione dei dettagli dell'azienda
+            return movementsService.GetCurrentBind(location);
+        }
+
+        //[Authorize]
+        [HttpGet]
+        public IEnumerable<DeviceProbe> GetProbes(int idDevice,DateTime startDate,DateTime endDate)
+        {
+            return probeService.GetProbes(idDevice, startDate, endDate);
         }
 
     }
