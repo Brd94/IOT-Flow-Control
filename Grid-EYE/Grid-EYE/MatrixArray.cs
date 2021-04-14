@@ -33,7 +33,7 @@ namespace Grid_EYE
 
         }
 
-        public void AddMatrix(T[,] Matrix)
+        public virtual void AddMatrix(T[,] Matrix)
         {
             Matrices[RelativeIndex] = Matrix;
             ++CurrentIndex;
