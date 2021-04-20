@@ -16,6 +16,7 @@ namespace WEBServer.Server.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize]
     public class CompanyController : ControllerBase
     {
         private readonly UserManager<IdentityUser> _userManager;
@@ -29,14 +30,12 @@ namespace WEBServer.Server.Controllers
             this.companyService = companyService;
         }
 
-        //[Authorize]
         [HttpGet]
         public Company GetCompany(string ID)
         {
             return companyService.GetCompany(int.Parse(ID));
         }
 
-        //[Authorize]
         [HttpPost]
         public IEnumerable<Company> GetCompanies(CompanyFilter filter)
         {

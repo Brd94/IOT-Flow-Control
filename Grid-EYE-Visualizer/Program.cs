@@ -34,7 +34,7 @@ namespace Grid_EYE_Visualizer
                 Console.WriteLine(i + " - " + ports[i]);
 
             //SerialPortAddr = ports[int.Parse(Console.ReadLine())];
-            SerialPortAddr = ports[1];
+            SerialPortAddr = ports[9];
 
             serialPort = new SerialPort();
             serialPort.BaudRate = 38400;

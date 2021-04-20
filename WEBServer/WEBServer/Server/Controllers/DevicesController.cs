@@ -11,6 +11,7 @@ namespace WEBServer.Server.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize]
     public class DevicesController : ControllerBase
     {
         private readonly IDeviceService deviceService;
@@ -24,7 +25,6 @@ namespace WEBServer.Server.Controllers
             this.probeService = probeService;
         }
 
-        [Authorize]
         [HttpPost]
         public IActionResult SetBinding(DeviceRegisterRequest request)
         {
@@ -44,7 +44,6 @@ namespace WEBServer.Server.Controllers
             }
         }
 
-        //[Authorize]
         [HttpGet]
         public IEnumerable<Device> GetBindedLocation(int location)
         {
@@ -52,12 +51,12 @@ namespace WEBServer.Server.Controllers
             return movementsService.GetCurrentBind(location);
         }
 
-        //[Authorize]
         [HttpGet]
         public IEnumerable<DeviceProbe> GetProbes(int idDevice,DateTime startDate,DateTime endDate)
         {
             return probeService.GetProbes(idDevice, startDate, endDate);
         }
+
 
     }
 }

@@ -12,12 +12,17 @@
 #include <Preferences.h>
 #include <AutoConnect.h>
 
-Preferences preferences; 
+#define RXD0 3
+#define TXD0 1
+#define PIN_ADD 17
+#define PIN_SUB 5
+
+Preferences preferences;
 WiFiClient espClient;
 PubSubClient client(espClient);
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, 16, 15, 4);
 WebServer server;
-AutoConnect portal(server);
+//AutoConnect portal(server); //Da reinserire
 
 char *ssid;
 char *password;
@@ -36,10 +41,11 @@ char station_id[20];
 
 String mac_address = String(WiFi.macAddress());
 
-
 anag anagra;
 TaskHandle_t task_mqtt;
 pin gpio_pin_add;
+pin gpio_pin_sub;
+pin gpio_pin_0;
 
 void setup()
 {
@@ -62,8 +68,6 @@ void setup()
 
   Serial.println();
 
-  
-
   preferences.begin("EEPROM", false);
 
   anagra.id = -505;
@@ -74,8 +78,8 @@ void setup()
   Serial.println("NOT SYNCED : " + preferences.getString("delta"));
   anagra.not_synced_delta = preferences.getString("delta").toInt();
 
-  if (anagra.not_synced_delta < 0)
-    setdelta(0);
+  // if (anagra.not_synced_delta < 0)
+  //   setdelta(0);
 
   Serial.println(anagra.not_synced_delta);
   anagra.pcount_server = -1;
@@ -98,13 +102,14 @@ void setup()
   Serial.println(password);
 
   u8g2.drawStr(3, 12, "Init prefs........OK");
+
   u8g2.sendBuffer();
 
   //WiFi.begin(ssid, password);
   u8g2.drawStr(3, 22, "Init wifi........OK");
   u8g2.sendBuffer();
 
-  //setup_wifi();
+  setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
 
@@ -112,12 +117,17 @@ void setup()
   //EEPROM.get(0, anagra); //Carico da memoria
 
   server.on("/", handle_onConnect);
-  portal.begin();
+  Serial.println("Sono qua 3");
+
+  //portal.begin();
+
   //server.begin();
   u8g2.drawStr(3, 32, "Init WebServer...OK");
   u8g2.sendBuffer();
 
   pinMode(0, INPUT_PULLUP);
+  pinMode(PIN_ADD, INPUT);
+  pinMode(PIN_SUB, INPUT);
 
   xTaskCreatePinnedToCore(
       loop_mqtt,
@@ -129,9 +139,23 @@ void setup()
       0);
 
   //Inizializzo il pin che gestisce l'incremento del delta
-  gpio_pin_add.id = 0;
+  gpio_pin_add.id = PIN_ADD;
   gpio_pin_add.current_state = digitalRead(gpio_pin_add.id);
   gpio_pin_add.last_state = digitalRead(gpio_pin_add.id);
+
+  gpio_pin_sub.id = PIN_SUB;
+  gpio_pin_sub.current_state = digitalRead(gpio_pin_sub.id);
+  gpio_pin_sub.last_state = digitalRead(gpio_pin_sub.id);
+
+  gpio_pin_0.id = 0;
+  gpio_pin_0.current_state = digitalRead(gpio_pin_0.id);
+  gpio_pin_0.last_state = digitalRead(gpio_pin_0.id);
+
+  //Serial2.begin(38400, SERIAL_8N1, RXD0, TXD0);
+
+  //u8g2.drawStr(3, 42, "Init SERIAL_2...OK");
+  //u8g2.sendBuffer();
+  Serial.println("Sono qua 5");
 
   delay(1700);
 }
@@ -191,26 +215,28 @@ void handle_onConnect()
   server.send(200, "text/html", SendHTML()); //Refresh
 }
 
-// void setup_wifi()
-// {
-//   delay(10);
-//   Serial.println();
-//   Serial.print("Connecting to ");
-//   Serial.println(ssid);
+void setup_wifi()
+{
+  delay(10);
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
 
-//   WiFi.begin(ssid, password);
+  WiFi.begin(ssid, password);
 
-//   while (WiFi.status() != WL_CONNECTED)
-//   {
-//     delay(200);
-//     Serial.println("Connetting to WiFi...");
-//   }
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(200);
+    Serial.print("Connetting to ");
+    Serial.print(ssid);
+    Serial.println();
+  }
 
-//   Serial.println("");
-//   Serial.println("WiFi connected");
-//   Serial.println("IP address: ");
-//   Serial.println(WiFi.localIP());
-// }
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+}
 
 void callback(char *topic, byte *message, unsigned int length)
 {
@@ -242,7 +268,7 @@ void callback(char *topic, byte *message, unsigned int length)
     Serial.println("RST DELTA");
     client.publish("esp/get_pcount", "");
   }
-  
+
   if (String(topic) == ("brokr/" + String(anagra.id) + "/pcount"))
   {
     anagra.pcount_server = doc["People_Count"];
@@ -286,21 +312,34 @@ void reconnect()
   }
 }
 
-bool get_pin_change(pin &gpio_pin)
+bool get_pin_change(pin &gpio_pin,int min_change_duration = 0)
 {
 
-    bool changed = false;
+  bool changed = false;
 
   gpio_pin.current_state = digitalRead(gpio_pin.id);
 
-  
-  if (gpio_pin.current_state != gpio_pin.last_state)
+  //Serial.print("Check PIN ");
+  //Serial.print(gpio_pin.id);
+
+  if (gpio_pin.current_state != gpio_pin.last_state && millis() - gpio_pin.last_change > min_change_duration)
   {
+
     if (gpio_pin.current_state == HIGH)
     {
       changed = true;
+      //Serial.print("...CHANGED (HIGH)!");
     }
+
+    gpio_pin.last_change = millis();
+
   }
+  else
+  {
+    //Serial.print("...NOT CHANGED");
+  }
+
+  //Serial.println();
 
   gpio_pin.last_state = gpio_pin.current_state;
 
@@ -339,14 +378,22 @@ void loop_mqtt(void *parameter)
   }
 }
 
+long now = 0;
+long last_pin_pooling = 0;
+
 void loop()
 {
+  while (Serial2.available())
+  {
+    Serial.print(char(Serial2.read()));
+  }
+
   //Serial.println(esp_get_free_heap_size());
   //server.runServer();
 
-  portal.handleClient();
+  //portal.handleClient();
 
-  long now = millis();
+  now = millis();
 
   u8g2.clearBuffer(); //Pulisco
 
@@ -354,7 +401,7 @@ void loop()
   // u8g2.drawLine(0, 0, 128, 0);
   // u8g2.drawLine(0, 0, 0, 63);
   // u8g2.drawLine(127, 0, 127, 63);
-   u8g2.drawLine(0, 12, 128, 12);
+  u8g2.drawLine(0, 12, 128, 12);
   // u8g2.drawLine(0, 63, 128, 63);
 
   //Scrivo l'IP
@@ -395,7 +442,7 @@ void loop()
     u8g2.drawLine(103, 3, 101, 5);
 
     Serial.println("WiFi connection lost");
-    //setup_wifi();
+    setup_wifi();
   }
   else
   {
@@ -419,8 +466,6 @@ void loop()
 
     u8g2.drawStr(3, 46, "Per config. digitare");
     u8g2.drawStr(3, 54, "l'ind.IP sul browser");
-
-
 
     //if (anagra.id > 0) //Rispondo ai client dell'interfaccia web solo se l'anagrafica è valida
     //  server.handleClient();
@@ -451,22 +496,62 @@ void loop()
   // {
   //   lastRSTPress = now;
 
-  
   // }
 
-  if (get_pin_change(gpio_pin_add))
-  {
-    setdelta(anagra.not_synced_delta + 1);
+  // if (now - last_pin_pooling > 500)
+  // {
 
-    lastRSTPress = now;
-    MQTTSyncPending_delta = true;
-  }
+    int state_add = digitalRead(PIN_ADD);
+    int state_sub = digitalRead(PIN_SUB);
 
-    char strsync[20];
+    Serial.print("Stato pin ");
+    Serial.print(PIN_ADD);
+    Serial.print("  ");
+    Serial.print(state_add);
+    Serial.print("  ");
+    Serial.print("Stato pin ");
+    Serial.print(PIN_SUB);
+    Serial.print("  ");
+    Serial.print(state_sub);
 
-      sprintf(strsync, "Da sincronizz. : %d", anagra.not_synced_delta);
+    Serial.println();
 
-    u8g2.drawStr(3, 35, strsync);
+    if (get_pin_change(gpio_pin_add))
+    {
+      Serial.println("GPIO ADD");
+
+      setdelta(anagra.not_synced_delta + 1);
+
+      lastRSTPress = now;
+      MQTTSyncPending_delta = true;
+    }
+    else if (get_pin_change(gpio_pin_sub))
+    {
+      Serial.println("GPIO SUB");
+
+      setdelta(anagra.not_synced_delta - 1);
+
+      lastRSTPress = now;
+      MQTTSyncPending_delta = true;
+    }
+    else if (get_pin_change(gpio_pin_0))
+    {
+      Serial.println("GPIO 0");
+
+      setdelta(0);
+
+      lastRSTPress = now;
+      MQTTSyncPending_delta = true;
+    }
+
+  //   last_pin_pooling = now;
+  // }
+
+  char strsync[25];
+
+  sprintf(strsync, "Da sincronizz. : %d", anagra.not_synced_delta);
+
+  u8g2.drawStr(3, 35, strsync);
 
   //u8g2.drawGlyph(5, 20, 0x2603);
 
