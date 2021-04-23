@@ -1,6 +1,5 @@
 #include <Wire.h>
 #include <Adafruit_AMG88xx.h>
-#include "MemoryFree.h"
 
 #define PIN_ADD 8
 #define PIN_SUB 7
@@ -126,6 +125,7 @@ void loop()
     //Serial.println("EndSignal");
 
     //read all the pixels
+   
 
     amg.readPixels(pixels);
     last_acq = millis();
@@ -161,17 +161,8 @@ void loop()
 
     pass = millis() - last_acq;
 
-    for (int i = 0; i < MATRIX; i++)
-    {
-      for (int j = 0; j < MATRIX; j++)
-      {
-        matrix_interpolated[i][j] = matrix_interpolated[i][j] + 1;
-      }
-    }
 
-    Serial.print("Memoria libera = ");
-    Serial.print(getFreeMemory());
-    Serial.println();
+   
 
     if (pass < 100)
       delay(100 - pass);

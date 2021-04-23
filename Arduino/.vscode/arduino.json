@@ -1,5 +1,6 @@
 {
-    "board": "arduino:avr:uno",
-    "port": "/dev/tty.usbmodem14101",
+    "configuration": "PMOD=no",
+    "board": "chipKIT:pic32:uno_pic32",
+    "port": "COM5",
     "sketch": "Matrix.ino"
 }
