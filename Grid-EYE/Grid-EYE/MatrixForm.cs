@@ -31,6 +31,7 @@ namespace Grid_EYE
 
         private float? max_value;
         private float? min_value;
+        private bool TempCheck;
 
         public MatrixForm()
         {
@@ -105,7 +106,14 @@ namespace Grid_EYE
 
                     float x = (value * 510) / (max - min);
 
-                    Color toBlend = GetBlendedColor((value * 100) / (max - min));
+                    Color toBlend = Color.White;
+
+                    try
+                    {
+                        if (max != min)
+                            toBlend = GetBlendedColor((value * 100) / (max - min));
+                    }
+                    catch { }
 
                     if (!float.IsNaN(x) && x >= 0 && x <= 510)
                     {
@@ -124,9 +132,12 @@ namespace Grid_EYE
 
                     e.FillRectangle(brush_2, pixel_h, pixel_v, PIXEL_SIZE, PIXEL_SIZE);
 
+                    if (TempCheck)
+                    {
+                        string s = ((int)showed_matrix[i, j]).ToString();
+                        TextOut(hdc, pixel_h, pixel_v, s, s.Length);
 
-                    string s = ((int)showed_matrix[i, j]).ToString();
-                    TextOut(hdc, pixel_h, pixel_v, s, s.Length);
+                    }
 
 
                     pixel_h += PIXEL_SIZE;
@@ -193,7 +204,7 @@ namespace Grid_EYE
         {
             while (true)
             {
-                await mre.WaitAsync();
+                await mre.WaitAsync(10000);
                 PrintMatrix(this.CreateGraphics());
                 Application.DoEvents();
             }
@@ -217,6 +228,16 @@ namespace Grid_EYE
 
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
+
+        }
+
+        private void textBox2_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
             try
             {
                 if (!string.IsNullOrWhiteSpace(textBox1.Text))
@@ -225,10 +246,7 @@ namespace Grid_EYE
                     max_value = null;
             }
             catch { }
-        }
 
-        private void textBox2_TextChanged(object sender, EventArgs e)
-        {
             try
             {
                 if (!string.IsNullOrWhiteSpace(textBox2.Text))
@@ -237,6 +255,13 @@ namespace Grid_EYE
                     min_value = null;
             }
             catch { }
+
+            TempCheck = checkBox2.Checked;
+        }
+
+        private void MatrixForm_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

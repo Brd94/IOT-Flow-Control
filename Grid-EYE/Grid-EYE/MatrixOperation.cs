@@ -130,5 +130,84 @@ namespace Grid_EYE
 
             return ret;
         }
+
+        public static (int x, int y) CalculateCentroid(float[,] matrix)
+        {
+            float[] sum_x = new float[32];
+            float[] sum_y = new float[32];
+
+            for (int i = 0; i < 32; i++)
+            {
+                for (int j = 0; j < 32; j++)
+                {
+                    sum_x[i] += matrix[i, j];
+                    sum_y[i] += matrix[j, i];
+
+                }
+            }
+
+            float mp_x = 0;
+            float mp_y = 0;
+
+            for (int i = 0; i < 32; i++)
+            {
+                mp_x += (i * sum_x[i]);
+                mp_y += (i * sum_y[i]);
+            }
+
+            mp_x /= Enumerable.Sum(sum_x);
+            mp_y /= Enumerable.Sum(sum_y);
+
+            return ((int)mp_x, (int)mp_y);
+        }
+
+        public static (int[] x,int[] y) CalculateCentroids(float[,] matrix)
+        {
+            int lenght = matrix.GetLength(0);
+
+            List<float[,]> matrixes = new List<float[,]>();
+
+            for (int i = 0; i < lenght; i++)
+            {
+                for(int j = 0; j < lenght; j++)
+                {
+                    if(matrix[i,j] != 0)
+                    {
+                        //Program.PrintMatrix(matrix);
+                        var matrix_out = new float[lenght, lenght];
+                        ApplyFloodFill(i, j, 0,ref matrix,ref matrix_out);
+                        matrixes.Add(matrix_out);
+                    }
+                }
+            }
+
+            int[] x = new int[matrixes.Count];
+            int[] y = new int[matrixes.Count];
+
+            for (int i = 0; i < matrixes.Count; i++)
+            {
+                var centroid = CalculateCentroid(matrixes[i]);
+                x[i] = centroid.x;
+                y[i] = centroid.y;
+            }
+
+            return (x,y);
+
+        }
+
+        public static void ApplyFloodFill(int x_node,int y_node,float limit_val,ref float[,] matrix_in,ref float[,] matrix_out)
+        {
+            if (matrix_in[x_node, y_node] == limit_val)
+                return;
+
+            matrix_out[x_node, y_node] = matrix_in[x_node, y_node];
+            matrix_in[x_node, y_node] = limit_val;
+
+            ApplyFloodFill(Math.Max(x_node - 1, 0), y_node, limit_val,ref matrix_in,ref matrix_out);
+            ApplyFloodFill(Math.Min(x_node + 1, matrix_in.GetLength(0) -1), y_node, limit_val,ref matrix_in, ref matrix_out);
+            ApplyFloodFill(x_node, Math.Max(y_node - 1, 0), limit_val,ref matrix_in, ref matrix_out);
+            ApplyFloodFill(x_node, Math.Min(y_node + 1, matrix_in.GetLength(1) -1), limit_val,ref matrix_in, ref matrix_out);
+
+        }
     }
 }

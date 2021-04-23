@@ -18,5 +18,19 @@ namespace Grid_EYE
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainForm());
         }
+
+
+        public static void PrintMatrix(float[,] matrix, int x = 32, int y = 32)
+        {
+            for (int i = 0; i < x; i++)
+            {
+                for (int j = 0; j < y; j++)
+                {
+                    Console.Write(matrix[i, j].ToString("N2"));                   
+
+                }
+                Console.WriteLine();
+            }
+        }
     }
 }

@@ -14,6 +14,34 @@ using System.Windows.Forms;
 
 namespace Grid_EYE
 {
+    /*
+    while(1){
+    
+    prendo la matrice 8x8
+    applico un interpolazione bicubica -> 32x32
+    se non ho acquisito le prime 50 -> acquisisco
+    altrimenti -> {
+                    massimo punto per punto -> matrice 32x32 con i massimi
+                    sottraggo questa alla matrice che mi arriva
+                    individuo i cluster
+                    calcolo i centroidi
+                    applico l'algoritmo di rilevamento dividendo in 2 la matrice e controllando quante ne sono cambiate sopra e sotto
+                    }
+
+
+
+
+
+
+    }
+
+
+     
+     
+     */
+
+
+
     public delegate void OnMatrixProcessComplete(float[,] matrix);
 
     public partial class MainForm : Form
@@ -30,6 +58,7 @@ namespace Grid_EYE
         public event OnMatrixProcessComplete OnProcessComplete;
         List<Thread> ui_threads = new List<Thread>();
 
+        private DeltaForm deltaform;
 
         public MainForm()
         {
@@ -70,16 +99,19 @@ namespace Grid_EYE
 
             listBox1.DisplayMember = "MatrixName";
 
+            deltaform = new DeltaForm();
+            deltaform.Show();
             
         }
 
         int n_sopra = 0;
         int n_sotto = 0;
 
+
         private void CalculateDeltas(float[,] matrix)
         {
 
-            if (matrix_with_cluster_center == null)
+            if (matrix_with_clusters_center == null)
                 return;
 
             int a_sopra = 0;
@@ -89,7 +121,7 @@ namespace Grid_EYE
             {
                 for (int j = 0; j < 32; j++)
                 {
-                    if (matrix_with_cluster_center[i, j] != 0)
+                    if (matrix_with_clusters_center[i, j] != 0)
                     {
                         if (i < 16)
                         {
@@ -105,10 +137,18 @@ namespace Grid_EYE
                 }
             }
 
+            deltaform.PushSopra(a_sopra);
+            deltaform.PushSotto(a_sotto);
+
             if (a_sopra != n_sopra && a_sotto != n_sotto)
-                OnError(msg: "Delta : " + (a_sopra-a_sotto));
+            {
+                OnError(msg: "Delta : " + (a_sopra-n_sopra));
+                Console.WriteLine(DateTime.Now + " " + (a_sopra - n_sopra < 0 ? "Entrato uno" : "Uscito uno"));
+               
+                deltaform.PushDelta(a_sopra - n_sopra);
+            }
 
-
+           
             n_sopra = a_sopra;
             n_sotto = a_sotto;
 
@@ -135,9 +175,14 @@ namespace Grid_EYE
                     var matrix_form = new MatrixForm();
                     ObservableMatrixArray<float> selected = null;
                     InvokeOnMainThread(() => selected = (ObservableMatrixArray<float>)listBox1.SelectedItem);
-                    matrix_form.SetMatrix(selected);
-                    matrix_form.ShowDialog();
 
+                    if (selected != null)
+                    {
+
+                        matrix_form.SetMatrix(selected);
+                        matrix_form.ShowDialog();
+
+                    }
 
                     OnError(msg: "Thread matrice " + selected?.MatrixName + " terminato.");
                 };
@@ -236,12 +281,17 @@ namespace Grid_EYE
             catch (Exception e) { OnError(e); }
         }
 
-        ObservableMatrixArray<float> base_matrix = new ObservableMatrixArray<float>(50);
-        ObservableMatrixArray<float> dam_matrix = new ObservableMatrixArray<float>(50);
+        private ObservableMatrixArray<float> base_matrix = new ObservableMatrixArray<float>(50);
+        private ObservableMatrixArray<float> dam_matrix = new ObservableMatrixArray<float>(50);
 
         private float[,] matrix_with_cluster_center;
+        private ObservableMatrixArray<float> mwcc = new ObservableMatrixArray<float>(1);
         private ObservableMatrixArray<float> ip = new ObservableMatrixArray<float>(1);
         private ObservableMatrixArray<float> dam_mwmb01 = new ObservableMatrixArray<float>(1);
+        private ObservableMatrixArray<float> mwb = new ObservableMatrixArray<float>(1);
+        private ObservableMatrixArray<float> mwmb = new ObservableMatrixArray<float>(1);
+        private int sensibilita = 5;
+        private float[,] matrix_with_clusters_center;
 
         private void OnError(Exception e = null, string msg = "")
         {
@@ -316,21 +366,21 @@ namespace Grid_EYE
 
                 var matrix_without_background = MatrixOperation.ApplyOperation<float, float>(x =>
                  {
-                     return x[2] > x[0] + (8 * x[1]) ? 1 : 0;
-                 }, new[] { matrix_med_base, matrix_std_base, interpolated }, 32, 32);
+                     return x[2] > x[0] + (2 * x[1]) ? x[2] : 0;
+                 }, new[] { matrix_max_base, matrix_std_base, interpolated }, 32, 32);
 
-                var mwb = new ObservableMatrixArray<float>(matrix_without_background);
+                mwb.AddMatrix(matrix_without_background);
                 mwb.MatrixName = "Background Eliminato";
                 listBox1.Items.Add(mwb);
 
                 var matrix_without_max_background = MatrixOperation.ApplyOperation<float, float>(x =>
                 {
-                    return x[1] - x[0];
+                    return x[1] - x[0] > sensibilita ? x[1] - x[0] : 0;
                 }, new[] { matrix_max_base, interpolated }, 32, 32);
 
 
 
-                var mwmb = new ObservableMatrixArray<float>(matrix_without_max_background);
+                mwmb.AddMatrix(matrix_without_max_background);
                 mwmb.MatrixName = "Background Max Eliminato";
                 listBox1.Items.Add(mwmb);
 
@@ -353,19 +403,39 @@ namespace Grid_EYE
                 mwmb01.MatrixName = "Background Max Eliminato sopra media";
                 listBox1.Items.Add(mwmb01);
 
+                float[,] matrix_without_max_background_cp = new float[32,32];
+                
+                for(int i = 0; i < 32; i++)
+                {
+                    for (int j = 0; j < 32; j++)
+                    {
+                        matrix_without_max_background_cp[i, j] = matrix_without_max_background[i,j];
+                    }
+                }
 
 
-                var centroid = CalculateCentroid(matrix_without_max_background_mean);
+                var centroid = MatrixOperation.CalculateCentroid(matrix_without_max_background_cp);
 
 
                 matrix_with_cluster_center = MatrixOperation.ApplyOperation<float, float>((x, i, j) =>
                 {
-                    return i == centroid.x && j == centroid.y ? 1 : 0;
+                    //return i == centroid.x && j == centroid.y && x[1] > matrix_med_base[i, j] + (2 * matrix_std_base[i, j]) ? 1 : 0;
+                    return i == centroid.x && j == centroid.y  ? 1 : 0;
                 }, new[] { matrix_max_base, interpolated }, 32, 32);
 
 
+                var centroids = MatrixOperation.CalculateCentroids(matrix_without_max_background_cp);
 
-                var mwcc = new ObservableMatrixArray<float>(matrix_with_cluster_center);
+                matrix_with_clusters_center = new float[32, 32];
+
+                for(int i= 0; i < centroids.x.Length; i++)
+                {
+                    matrix_with_clusters_center[centroids.x[i], centroids.y[i]] = 1;
+                }
+
+                //Console.WriteLine(centroids.x.Length);
+
+                mwcc.AddMatrix(matrix_with_clusters_center);
                 mwcc.MatrixName = "Clusters center";
                 listBox1.Items.Add(mwcc);
 
@@ -400,35 +470,7 @@ namespace Grid_EYE
             });
         }
 
-        private (int x, int y) CalculateCentroid(float[,] matrix)
-        {
-            float[] sum_x = new float[32];
-            float[] sum_y = new float[32];
-
-            for (int i = 0; i < 32; i++)
-            {
-                for (int j = 0; j < 32; j++)
-                {
-                    sum_x[i] += matrix[i, j];
-                    sum_y[i] += matrix[j, i];
-
-                }
-            }
-
-            float mp_x = 0;
-            float mp_y = 0;
-
-            for (int i = 0; i < 32; i++)
-            {
-                mp_x += (i * sum_x[i]);
-                mp_y += (i * sum_y[i]);
-            }
-
-            mp_x /= Enumerable.Sum(sum_x);
-            mp_y /= Enumerable.Sum(sum_y);
-
-            return ((int)mp_x, (int)mp_y);
-        }
+        
 
 
 
@@ -469,6 +511,11 @@ namespace Grid_EYE
         {
             base_matrix = new ObservableMatrixArray<float>(50);
             dam_matrix = new ObservableMatrixArray<float>(1);
+        }
+
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+            sensibilita = (int)numericUpDown1.Value;
         }
     }
 }

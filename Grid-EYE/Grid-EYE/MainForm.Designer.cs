@@ -42,7 +42,10 @@ namespace Grid_EYE
             this.textBox4 = new System.Windows.Forms.TextBox();
             this.button3 = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
+            this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
+            this.label4 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
             this.SuspendLayout();
             // 
             // listBox1
@@ -104,7 +107,7 @@ namespace Grid_EYE
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(417, 21);
+            this.label2.Location = new System.Drawing.Point(401, 21);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(134, 24);
             this.label2.TabIndex = 8;
@@ -119,7 +122,7 @@ namespace Grid_EYE
             // 
             // textBox2
             // 
-            this.textBox2.Location = new System.Drawing.Point(551, 18);
+            this.textBox2.Location = new System.Drawing.Point(535, 18);
             this.textBox2.Name = "textBox2";
             this.textBox2.Size = new System.Drawing.Size(57, 29);
             this.textBox2.TabIndex = 10;
@@ -147,9 +150,9 @@ namespace Grid_EYE
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(674, 14);
+            this.button3.Location = new System.Drawing.Point(747, 14);
             this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(146, 40);
+            this.button3.Size = new System.Drawing.Size(73, 40);
             this.button3.TabIndex = 13;
             this.button3.Text = "Sampling";
             this.button3.UseVisualStyleBackColor = true;
@@ -164,11 +167,36 @@ namespace Grid_EYE
             this.label3.TabIndex = 14;
             this.label3.Text = "DELTA : ";
             // 
+            // numericUpDown1
+            // 
+            this.numericUpDown1.Location = new System.Drawing.Point(626, 25);
+            this.numericUpDown1.Name = "numericUpDown1";
+            this.numericUpDown1.Size = new System.Drawing.Size(72, 29);
+            this.numericUpDown1.TabIndex = 15;
+            this.numericUpDown1.Value = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+            this.numericUpDown1.ValueChanged += new System.EventHandler(this.numericUpDown1_ValueChanged);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label4.Location = new System.Drawing.Point(626, 5);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(72, 17);
+            this.label4.TabIndex = 16;
+            this.label4.Text = "Sensibilità";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(11F, 24F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(832, 561);
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.numericUpDown1);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.textBox4);
@@ -187,6 +215,7 @@ namespace Grid_EYE
             this.Name = "MainForm";
             this.Text = "Form1";
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -207,6 +236,8 @@ namespace Grid_EYE
         private System.Windows.Forms.TextBox textBox4;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.NumericUpDown numericUpDown1;
+        private System.Windows.Forms.Label label4;
     }
 }
 
