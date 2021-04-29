@@ -101,7 +101,18 @@ namespace Grid_EYE
 
             deltaform = new DeltaForm();
             deltaform.Show();
+
+            var serialMessagePump = new System.Windows.Forms.Timer();
+            serialMessagePump.Interval = 100;
+            serialMessagePump.Tick += SerialMessagePump_Tick;
+            serialMessagePump.Start();
+
             
+        }
+
+        private void SerialMessagePump_Tick(object sender, EventArgs e)
+        {
+            ReadMatrixFromFlow_Direct();
         }
 
         int n_sopra = 0;
@@ -208,7 +219,7 @@ namespace Grid_EYE
                 serialPort.Dispose();
 
             serialPort = new SerialPort();
-            serialPort.BaudRate = 38400;
+            serialPort.BaudRate = baud;
             serialPort.PortName = listBox2.SelectedItem.ToString();
 
             serialPort.Open();
@@ -219,8 +230,12 @@ namespace Grid_EYE
         {
             string read = serialPort.ReadLine();
 
-            ReadMatrixFromFlow(read);
-            ReadTermFromFlow(read);
+            MatrixString += read.Replace("\r","");
+
+            Console.WriteLine(read);
+           
+            //ReadMatrixFromFlow(read);
+            //ReadTermFromFlow(read);
         }
 
         private void ReadTermFromFlow(string read)
@@ -281,6 +296,43 @@ namespace Grid_EYE
             catch (Exception e) { OnError(e); }
         }
 
+        private void ReadMatrixFromFlow_Direct()
+        {
+            try
+            {
+  
+                if (MatrixString.Length >= 384)
+                {
+                    string matrix_correct = "";
+                    int i = 0;
+
+                    for (i = 0; i < 384; ++i)
+                    {
+                        if(i%48 == 0)
+                            matrix_correct +=  Environment.NewLine;
+
+                        matrix_correct += MatrixString[i];
+                    }
+
+                    MatrixString = MatrixString.Substring(i);
+
+                    var matrix = ProcessMatrix(matrix_correct);
+
+                    OnProcessComplete?.Invoke(matrix);
+
+                    InvokeOnMainThread(() => textBox2.Text = stopWatch.ElapsedMilliseconds + " ms");
+                    stopWatch.Restart();
+
+
+                    return;
+                }
+
+               
+
+            }
+            catch (Exception e) { OnError(e); }
+        }
+
         private ObservableMatrixArray<float> base_matrix = new ObservableMatrixArray<float>(50);
         private ObservableMatrixArray<float> dam_matrix = new ObservableMatrixArray<float>(50);
 
@@ -292,6 +344,7 @@ namespace Grid_EYE
         private ObservableMatrixArray<float> mwmb = new ObservableMatrixArray<float>(1);
         private int sensibilita = 5;
         private float[,] matrix_with_clusters_center;
+        private int baud = 115200;
 
         private void OnError(Exception e = null, string msg = "")
         {
@@ -516,6 +569,16 @@ namespace Grid_EYE
         private void numericUpDown1_ValueChanged(object sender, EventArgs e)
         {
             sensibilita = (int)numericUpDown1.Value;
+        }
+
+        private void textBox5_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox5_Leave(object sender, EventArgs e)
+        {
+            baud = int.Parse(textBox5.Text);
         }
     }
 }
