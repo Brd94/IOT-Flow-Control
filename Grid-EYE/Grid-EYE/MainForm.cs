@@ -107,7 +107,10 @@ namespace Grid_EYE
             serialMessagePump.Tick += SerialMessagePump_Tick;
             serialMessagePump.Start();
 
-            
+
+            broker = new MQTTServer.MQTTBroker();
+            broker.StartServer("Brd", "Errata", 1883);
+
         }
 
         private void SerialMessagePump_Tick(object sender, EventArgs e)
@@ -172,7 +175,14 @@ namespace Grid_EYE
 
         private void button2_Click(object sender, EventArgs e)
         {
+            if (radioButton2.Checked)
+            {
+                broker.OnReceive += Broker_OnReceive;
+            }
+            else
+            {
             serialPort.DataReceived += OnDataReceive;
+            }
 
         }
 
@@ -556,7 +566,14 @@ namespace Grid_EYE
 
         private void button1_Click(object sender, EventArgs e)
         {
-            serialPort.DataReceived -= OnDataReceive;
+            if (radioButton2.Checked)
+            {
+                broker.OnReceive -= Broker_OnReceive;
+            }
+            else
+            {
+                serialPort.DataReceived -= OnDataReceive;
+            }
 
         }
 
@@ -579,6 +596,25 @@ namespace Grid_EYE
         private void textBox5_Leave(object sender, EventArgs e)
         {
             baud = int.Parse(textBox5.Text);
+        }
+
+        MQTTServer.MQTTBroker broker;
+
+
+        private void radioButton2_CheckedChanged(object sender, EventArgs e)
+        {
+            panel1.Enabled = !radioButton2.Checked;
+
+            
+        }
+
+        private void Broker_OnReceive(MQTTServer.Models.MQTTBrokerMessage msg)
+        {
+            string read = msg.Payload;
+
+            MatrixString += read.Replace("\r", "");
+
+            ReadMatrixFromFlow_Direct();
         }
     }
 }

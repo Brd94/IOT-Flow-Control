@@ -46,8 +46,12 @@ namespace Grid_EYE
             this.label4 = new System.Windows.Forms.Label();
             this.textBox5 = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
+            this.radioButton1 = new System.Windows.Forms.RadioButton();
+            this.radioButton2 = new System.Windows.Forms.RadioButton();
+            this.panel1 = new System.Windows.Forms.Panel();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // listBox1
@@ -91,7 +95,7 @@ namespace Grid_EYE
             // 
             this.listBox2.FormattingEnabled = true;
             this.listBox2.ItemHeight = 24;
-            this.listBox2.Location = new System.Drawing.Point(26, 60);
+            this.listBox2.Location = new System.Drawing.Point(14, 8);
             this.listBox2.Name = "listBox2";
             this.listBox2.Size = new System.Drawing.Size(163, 244);
             this.listBox2.TabIndex = 5;
@@ -194,7 +198,7 @@ namespace Grid_EYE
             // 
             // textBox5
             // 
-            this.textBox5.Location = new System.Drawing.Point(99, 321);
+            this.textBox5.Location = new System.Drawing.Point(87, 269);
             this.textBox5.Name = "textBox5";
             this.textBox5.Size = new System.Drawing.Size(90, 29);
             this.textBox5.TabIndex = 17;
@@ -204,19 +208,52 @@ namespace Grid_EYE
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(22, 324);
+            this.label5.Location = new System.Drawing.Point(10, 272);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(71, 24);
             this.label5.TabIndex = 18;
             this.label5.Text = "BAUD :";
+            // 
+            // radioButton1
+            // 
+            this.radioButton1.AutoSize = true;
+            this.radioButton1.Checked = true;
+            this.radioButton1.Location = new System.Drawing.Point(26, 17);
+            this.radioButton1.Name = "radioButton1";
+            this.radioButton1.Size = new System.Drawing.Size(75, 28);
+            this.radioButton1.TabIndex = 19;
+            this.radioButton1.TabStop = true;
+            this.radioButton1.Text = "Serial";
+            this.radioButton1.UseVisualStyleBackColor = true;
+            // 
+            // radioButton2
+            // 
+            this.radioButton2.AutoSize = true;
+            this.radioButton2.Location = new System.Drawing.Point(114, 17);
+            this.radioButton2.Name = "radioButton2";
+            this.radioButton2.Size = new System.Drawing.Size(83, 28);
+            this.radioButton2.TabIndex = 20;
+            this.radioButton2.Text = "MQTT";
+            this.radioButton2.UseVisualStyleBackColor = true;
+            this.radioButton2.CheckedChanged += new System.EventHandler(this.radioButton2_CheckedChanged);
+            // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.listBox2);
+            this.panel1.Controls.Add(this.textBox5);
+            this.panel1.Controls.Add(this.label5);
+            this.panel1.Location = new System.Drawing.Point(12, 52);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(210, 301);
+            this.panel1.TabIndex = 21;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(11F, 24F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(832, 561);
-            this.Controls.Add(this.label5);
-            this.Controls.Add(this.textBox5);
+            this.Controls.Add(this.radioButton2);
+            this.Controls.Add(this.radioButton1);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.numericUpDown1);
             this.Controls.Add(this.label3);
@@ -227,17 +264,19 @@ namespace Grid_EYE
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.listBox2);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.trackBar1);
             this.Controls.Add(this.listBox1);
+            this.Controls.Add(this.panel1);
             this.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Margin = new System.Windows.Forms.Padding(6);
             this.Name = "MainForm";
             this.Text = "Form1";
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -262,6 +301,9 @@ namespace Grid_EYE
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox textBox5;
         private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.RadioButton radioButton1;
+        private System.Windows.Forms.RadioButton radioButton2;
+        private System.Windows.Forms.Panel panel1;
     }
 }
 

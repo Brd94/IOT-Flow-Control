@@ -133,30 +133,37 @@ namespace Grid_EYE
 
         public static (int x, int y) CalculateCentroid(float[,] matrix)
         {
-            float[] sum_x = new float[32];
-            float[] sum_y = new float[32];
-
-            for (int i = 0; i < 32; i++)
-            {
-                for (int j = 0; j < 32; j++)
-                {
-                    sum_x[i] += matrix[i, j];
-                    sum_y[i] += matrix[j, i];
-
-                }
-            }
+      
+            float sum_x;
+            float sum_y;
 
             float mp_x = 0;
             float mp_y = 0;
 
+            float sum = 0;
+
             for (int i = 0; i < 32; i++)
             {
-                mp_x += (i * sum_x[i]);
-                mp_y += (i * sum_y[i]);
+                sum_x = 0;
+                sum_y = 0;
+
+                for (int j = 0; j < 32; j++)
+                {
+                   
+                    sum_x += matrix[i, j];
+                    sum_y += matrix[j, i];
+                    sum += matrix[i, j];
+                }
+
+                mp_x += (i * sum_x);
+                mp_y += (i * sum_y);
+
             }
 
-            mp_x /= Enumerable.Sum(sum_x);
-            mp_y /= Enumerable.Sum(sum_y);
+           
+
+            mp_x /= sum;
+            mp_y /= sum;
 
             return ((int)mp_x, (int)mp_y);
         }
@@ -175,7 +182,7 @@ namespace Grid_EYE
                     {
                         //Program.PrintMatrix(matrix);
                         var matrix_out = new float[lenght, lenght];
-                        ApplyFloodFill(i, j, 0,ref matrix,ref matrix_out);
+                        ApplyFloodFill_Iterative((short)i, (short)j, 0,ref matrix,ref matrix_out);
                         matrixes.Add(matrix_out);
                     }
                 }
@@ -208,6 +215,75 @@ namespace Grid_EYE
             ApplyFloodFill(x_node, Math.Max(y_node - 1, 0), limit_val,ref matrix_in, ref matrix_out);
             ApplyFloodFill(x_node, Math.Min(y_node + 1, matrix_in.GetLength(1) -1), limit_val,ref matrix_in, ref matrix_out);
 
+        }
+
+        public static void ApplyFloodFill_Iterative(short x_node, short y_node, short limit_val,ref float[,] matrix_in,ref float[,] matrix_out)
+        {
+            short MATRIX = 32;
+
+            int coda = 0;
+            int testa = 1;
+
+            short[] matrix_queue = new short[1024];
+            bool[,] matrix_visited = new bool[32,32];
+
+            matrix_queue[0] = (short)((x_node * MATRIX) + y_node);
+
+            while (coda < testa)
+            {
+                short x = (short)(matrix_queue[coda] / MATRIX);
+                short y = (short)(matrix_queue[coda] % MATRIX);
+
+               
+
+                if (matrix_in[x,y] != limit_val)
+                {
+                    matrix_out[x,y] = matrix_in[x,y];
+                    matrix_in[x,y] = limit_val;
+                }
+
+                short x1 = (short)Math.Max(x - 1, 0);
+                short y1 = y;
+
+                if (matrix_in[x1,y1] != limit_val && !matrix_visited[x1,y1])
+                {
+                    matrix_visited[x1,y1] = true;
+                    matrix_queue[testa] = (short)((x1 * MATRIX) + y1);
+                    testa++;
+                }
+
+                short x2 = (short)(Math.Min(x + 1, MATRIX - 1));
+                short y2 = y;
+
+                if (matrix_in[x2,y2] != limit_val && !matrix_visited[x2,y2])
+                {
+                    matrix_visited[x2,y2] = true;
+                    matrix_queue[testa] = (short)((x2 * MATRIX) + y2);
+                    testa++;
+                }
+
+                short x3 = x;
+                short y3 = (short)Math.Max(y - 1, 0);
+
+                if (matrix_in[x3,y3] != limit_val && !matrix_visited[x3,y3])
+                {
+                    matrix_visited[x3,y3] = true;
+                    matrix_queue[testa] = (short)((x3 * MATRIX) + y3);
+                    testa++;
+                }
+
+                short x4 = x;
+                short y4 = (short)Math.Min(y + 1, MATRIX - 1);
+
+                if (matrix_in[x4,y4] != limit_val && !matrix_visited[x4,y4])
+                {
+                    matrix_visited[x4,y4] = true;
+                    matrix_queue[testa] = (short)((x4 * MATRIX) + y4);
+                    testa++;
+                }
+
+                coda++;
+            }
         }
     }
 }
