@@ -11,10 +11,14 @@
 
 #define LED_0 12
 #define LED_1 23
-#define LED_2 17
+#define LED_2 25
 
 #define MATRIX 32
+#define MATRIX_POOLING 100
 #define MAX_PPL 3
+#define BASE_SIZE 50
+#define BASE_REACQ 60000
+#define BASE_FORCE_REACQ 2400000
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -28,12 +32,15 @@ float pixels[AMG88xx_PIXEL_ARRAY_SIZE];
 
 float matrix_sensor[8][8];
 float matrix_interpolated[MATRIX][MATRIX];
+float matrix_base_max_temp[MATRIX][MATRIX];
 float matrix_base_max[MATRIX][MATRIX];
-float matrix_without_max_background[MATRIX][MATRIX];
+float matrix_without_max_background_cutted[MATRIX][MATRIX];
 byte matrix_centroids[MATRIX][MATRIX];
 
 int matrix_processed = 0;
-int matrix_cut_value = 3;
+int matrix_in_base = 0;
+int matrix_cut_value = 3; //DEFINE
+long matrix_base_acq = 0;
 
 int current_delta = 0;
 int total_delta = 0;
@@ -62,7 +69,7 @@ void setup()
   gpio_pin_0.current_state = digitalRead(gpio_pin_0.id);
   gpio_pin_0.last_state = digitalRead(gpio_pin_0.id);
 
-  client.setServer("192.168.178.40", 1883);
+  client.setServer("192.168.178.20", 1883);
 
   xTaskCreatePinnedToCore(
       loop_output,
@@ -73,10 +80,22 @@ void setup()
       &task_output,
       0);
 
-  current_delta = -5;
+  current_delta = -5; //Da rimuovere
 
   digitalWrite(PIN_SUB, HIGH);
   digitalWrite(PIN_ADD, HIGH);
+
+  for (int i = 0; i < 32; i++)
+  {
+    for (int j = 0; j < 32; j++)
+    {
+      matrix_base_max[i][j] = 200;
+      matrix_base_max_temp[i][j] = 0;
+      matrix_centroids[i][j] = 0;
+      matrix_without_max_background_cutted[i][j] = 0;
+      matrix_interpolated[i][j] = 0;
+    }
+  }
 
   delay(1000);
 }
@@ -114,8 +133,9 @@ void loop_output(void *parameter)
 
   String mac_address = String(WiFi.macAddress());
 
-  int bufferlen = 40;
-  char *buffer = (char *)malloc(sizeof(char) * bufferlen);
+  char act_m[10];
+  char buffer[400];
+  char buffer2[400];
 
   while (true)
   {
@@ -138,9 +158,21 @@ void loop_output(void *parameter)
       {
         digitalWrite(LED_0, HIGH);
 
-       
+        sprintf(act_m, "%d", matrix_processed);
 
-        client.publish("esp32/debug", "test");
+        sprintf(buffer,
+                "%s UP %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f", act_m,
+                pixels[0], pixels[1], pixels[2], pixels[3], pixels[4], pixels[5], pixels[6], pixels[7], pixels[8], pixels[9], pixels[10], pixels[11], pixels[12], pixels[13], pixels[14], pixels[15], pixels[16], pixels[17], pixels[18], pixels[19], pixels[20], pixels[21], pixels[22], pixels[23], pixels[24], pixels[25], pixels[26], pixels[27], pixels[28], pixels[29], pixels[30], pixels[31]);
+
+        sprintf(buffer2,
+                "%s DOWN %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f", act_m,
+                pixels[32], pixels[33], pixels[34], pixels[35], pixels[36], pixels[37], pixels[38], pixels[39], pixels[40], pixels[41], pixels[42], pixels[43], pixels[44], pixels[45], pixels[46], pixels[47], pixels[48], pixels[49], pixels[50], pixels[51], pixels[52], pixels[53], pixels[54], pixels[55], pixels[56], pixels[57], pixels[58], pixels[59], pixels[60], pixels[61], pixels[62], pixels[63]);
+
+        // strcat(buffer,buffer2);
+
+        client.publish("esp32/debug", buffer);
+        client.publish("esp32/debug", buffer2);
+
         //Serial.println(s);
         s = "";
         canPrint = false;
@@ -245,22 +277,8 @@ void SyncDeltas()
   }
 }
 
-long last_acq;
-long pass;
-
-void loop()
+void ShowOnPress() //Funzione di debug
 {
-
-  // if (digitalRead(LED_1) == 0)
-  //   digitalWrite(LED_1, HIGH);
-  // else
-  //   digitalWrite(LED_1, LOW);
-
-  //String serialOut = "";
-
-  //u8g2.clearBuffer();
-  SyncDeltas();
-
   if (get_pin_change(gpio_pin_0))
   {
     int state_sub = digitalRead(PIN_SUB);
@@ -300,15 +318,15 @@ void loop()
     digitalWrite(PIN_SUB, state_sub);
     digitalWrite(PIN_ADD, state_add);
   }
+}
 
-  // if (amg_status)
-  //   u8g2.drawStr(0, 0, "Sensore OK");
-  // else
-  //   u8g2.drawStr(0, 0, "Sensore ERR");
+long last_acq;
+long pass;
 
-  // char buf[16];
-  // ltoa(millis() / 1000, buf, 10);
-  //u8g2.drawStr(80, 0, buf);
+void loop()
+{
+
+  ShowOnPress();
 
   if (!amg_status)
   {
@@ -323,6 +341,7 @@ void loop()
   }
   else
   {
+    digitalWrite(LED_2, HIGH); //Inizio acquisizione
 
     amg.readPixels(pixels);
     last_acq = millis();
@@ -337,32 +356,22 @@ void loop()
       }
     }
 
-    digitalWrite(LED_2, HIGH);
-    // Serial.println("LOOP IN " + String(toPrint));
     BicubicInterpolation(matrix_sensor, 8, 8, matrix_interpolated, 32, 32);
+
+    ManageBase();
 
     for (int i = 0; i < 32; i++)
     {
       for (int j = 0; j < 32; j++)
       {
 
-        if (matrix_processed < 50 && matrix_interpolated[i][j] > matrix_base_max[i][j])
-        {
-          matrix_base_max[i][j] = matrix_interpolated[i][j];
-        }
-        else if (matrix_processed >= 50)
-        {
-          //s += String(matrix_interpolated[i][j] - matrix_base_max[i][j]) + "...";
-          if (matrix_interpolated[i][j] - matrix_base_max[i][j] >= matrix_cut_value)
-          {
-            //s += "Assegnato";
-            matrix_without_max_background[i][j] = matrix_interpolated[i][j] - matrix_base_max[i][j];
-          }
-          else
-            matrix_without_max_background[i][j] = 0;
+        if (matrix_interpolated[i][j] - matrix_base_max[i][j] > matrix_cut_value)
+          matrix_without_max_background_cutted[i][j] = matrix_interpolated[i][j] - matrix_base_max[i][j];
+        else
+          matrix_without_max_background_cutted[i][j] = 0;
 
-          matrix_centroids[i][j] = 0;
-        }
+        matrix_centroids[i][j] = 0;
+
         //s += "\n\n";
 
         //s+= String( matrix_without_max_background[i][j]);
@@ -376,13 +385,14 @@ void loop()
 
     matrix_processed++;
 
-    CalculateCentroids(matrix_without_max_background, matrix_centroids);
+    CalculateCentroids(matrix_without_max_background_cutted, matrix_centroids);
     int delta = CalculateDeltas(matrix_centroids);
     current_delta += delta;
     total_delta += delta;
     //s += "Delta : " + String(current_delta);
 
-    digitalWrite(LED_2, LOW);
+    if (matrix_in_base >= 50)
+      digitalWrite(LED_2, LOW); // Fine acquisizione
     // char result[4];
     // dtostrf(amg.readThermistor(), 2, 2, result);
     //u8g2.drawStr(0, 7, result);
@@ -430,11 +440,82 @@ void loop()
 
   pass = millis() - last_acq;
 
+  SyncDeltas();
+
   if (pass < 100)
   {
     delay(100 - pass);
   }
   //u8g2.sendBuffer();
+}
+
+void ManageBase()
+{
+
+  if (millis() - matrix_base_acq > BASE_REACQ && matrix_in_base >= 50)
+    matrix_in_base = 0;
+
+  if (matrix_in_base >= 50)
+    return;
+
+  int centroids = 0;
+
+  for (int i = 0; i < 32; i++)
+  {
+    for (int j = 0; j < 32; j++)
+    {
+      if (matrix_centroids[i][j] == 1)
+      {
+        centroids++;
+      }
+    }
+  }
+
+  if (centroids == 0)
+  {
+    for (int i = 0; i < 32; i++)
+    {
+      for (int j = 0; j < 32; j++)
+      {
+        if (matrix_interpolated[i][j] > matrix_base_max_temp[i][j])
+        {
+          matrix_base_max_temp[i][j] = matrix_interpolated[i][j];
+        }
+      }
+    }
+
+    matrix_in_base++;
+
+    if (matrix_in_base >= 50)
+    {
+
+      //current_delta += 3;
+
+      for (int i = 0; i < 32; i++)
+      {
+        for (int j = 0; j < 32; j++)
+        {
+          matrix_base_max[i][j] = matrix_base_max_temp[i][j];
+        }
+      }
+
+      matrix_base_acq = millis();
+    }
+  }
+  else
+  {
+
+    matrix_in_base = 0;
+
+    for (int i = 0; i < 32; i++)
+    {
+      for (int j = 0; j < 32; j++)
+      {
+
+        matrix_base_max_temp[i][j] = 0;
+      }
+    }
+  }
 }
 
 float InterpolateCubic(float v0, float v1, float v2, float v3, float fraction)
@@ -592,7 +673,10 @@ void CalculateCentroids(float matrix[MATRIX][MATRIX], byte matrix_out[MATRIX][MA
         //centroids = (int *)realloc(centroids, totalVals * sizeof(int));
         //centroids[totalVals - 1] = centroid;
         matrix_out[x][y] = 1;
-        s += "Centroide " + String(totalVals) + " posizione " + x + "\n";
+        // char buffer[12];
+        // sprintf(buffer, "CENT:%d,%d", x, y);
+        // client.publish("esp32/debug", buffer);
+        //s += "Centroide " + String(totalVals) + " posizione " + x + "\n";
       }
     }
   }
@@ -729,9 +813,19 @@ int CalculateDeltas(byte matrix[MATRIX][MATRIX])
     }
   }
 
+  // char buffer[12];
+  // sprintf(buffer, "%d,%d", actual_top, actual_bottom);
+  // client.publish("esp32/debug", buffer);
+
   if (actual_top != top && actual_bottom != bottom)
   {
-    delta = actual_top - top;
+    // delta = actual_top - top;
+    if (actual_top - top < 0) //Test per evitare falsi positivi
+      delta--;
+    else
+      delta++;
+
+    //Stavo pensando se conviene controllare che anche l' actual_bottom-bottom = actual_top - top
   }
 
   top = actual_top;

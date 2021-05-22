@@ -48,7 +48,7 @@ namespace MQTTServer
             }
             else
             {
-                await db.QueryAsync($"INSERT INTO DeviceInfo(Mac_Address) Values({ID}) ");
+                await db.QueryAsync($"INSERT INTO DeviceInfo(Mac_Address,OTP_Key) Values({ID},'Test') ");
                 //await db.QueryAsync($"INSERT INTO RegisteredDevices(ID,Last_Seen) Values({ID},{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}) ");
                 //Console.WriteLine("Benvenuto {0}!", ID);
             }
