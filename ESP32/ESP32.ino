@@ -86,14 +86,20 @@ void setup()
   //anagra.pc = preferences.getString("anagra_pc", anagra.pc);
   //anagra.city = preferences.getString("anagra_city", anagra.city);
 
-  String saved_ssid = preferences.getString("SSID");
-  String saved_wpwd = preferences.getString("WPWD");
+  // String saved_ssid = preferences.getString("SSID");
+  // String saved_wpwd = preferences.getString("WPWD");
+  
+  String saved_ssid = "Brd";
+  String saved_wpwd = "12345678";
+  
 
   Serial.println("Saved SSID = " + saved_ssid);
   Serial.println("Saved WPWD = " + saved_wpwd);
 
   ssid = (char *)malloc(saved_ssid.length() + 1);
   password = (char *)malloc(saved_wpwd.length() + 1);
+
+  
 
   saved_ssid.toCharArray(ssid, saved_ssid.length() + 1);
   saved_wpwd.toCharArray(password, saved_wpwd.length() + 1);
