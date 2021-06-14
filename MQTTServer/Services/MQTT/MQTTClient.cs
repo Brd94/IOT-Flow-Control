@@ -58,7 +58,7 @@ namespace MQTTServer
             if (client?.IsConnected ?? false)
             {
                 client.PublishAsync(Topic, Message);
-                Console.WriteLine("MASTER dice {1} sul Topic : {0} ", Topic, Message);
+                //Console.WriteLine("MASTER dice {1} sul Topic : {0} ", Topic, Message);
             }
         }
     }

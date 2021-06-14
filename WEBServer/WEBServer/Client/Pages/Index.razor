@@ -3,8 +3,12 @@
 @using GoogleMapsComponents.Maps
 @using Microsoft.JSInterop;
 @using System.Threading.Tasks;
+@using Microsoft.AspNetCore.SignalR.Client
 @inject IJSRuntime JS;
 @inject ICompanyService companyService
+@inject NavigationManager Navigation
+
+
 
 
 <div>
@@ -20,9 +24,13 @@
 
     private List<Marker> markers = new List<Marker>();
 
-    protected override void OnInitialized()
+    private HubConnection _hubConnection;
+
+
+    protected override async Task OnInitializedAsync()
     {
 
+        base.OnInitialized();
 
         mapOptions = new MapOptions()
         {
@@ -38,6 +46,28 @@
         };
 
 
+        string huburi = $"{this.Navigation.BaseUri}hubs/notifyhub";
+
+        //Console.WriteLine("URL:" + huburi);
+
+
+        _hubConnection = new HubConnectionBuilder()
+       .WithUrl(huburi)
+       .Build();
+
+        _hubConnection.On<object>("UpdateReceived", message =>
+        {
+            Console.WriteLine("Refresh.." + message);
+
+            RefreshCompanies();
+
+            this.StateHasChanged();
+        });
+
+        await _hubConnection.StartAsync();
+
+        Console.WriteLine("STATO SIGNALR:" + _hubConnection.State);
+
     }
 
     protected override void OnAfterRender(bool firstRender)
@@ -48,6 +78,12 @@
     private async Task OnAfterInitAsync()
     {
         await map1.InteropObject.AddListener("bounds_changed", async () => await BoundsChanged());
+
+        await RefreshCompanies();
+    }
+
+    private async Task RefreshCompanies()
+    {
 
         var companies = await companyService.GetCompaniesAsync(new CompanyFilter());
 
@@ -90,7 +126,6 @@
             await marker.AddListener("click", async () => await MarkerClick());
             markers.Add(marker);
         }
-
     }
 
 

@@ -29,7 +29,7 @@ namespace WEBServer.Server.Models
                 yield return new DeviceProbe()
                 {
                     ID_Device = dr.Field<int>("ID_Device_FK"),
-                    Delta = dr.Field<int>("Delta"),
+                    Delta = dr.Field<short>("Delta"),
                     Date = dr.Field<DateTime>("Date")
                 };
             }

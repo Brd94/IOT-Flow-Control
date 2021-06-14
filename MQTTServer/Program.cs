@@ -1,6 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using MQTTServer.Services;
+using Newtonsoft.Json;
 using System;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 
@@ -18,6 +20,7 @@ namespace MQTTServer
 
         static void Main(string[] args)
         {
+
             //connector = new SQLiteConnector(@"C:\Users\Brd\Desktop\IOT-Flow-Control\Shared\Data.db"); // TODO : Cambiare db -> mysql
             connector = new MySQLConnector("192.168.178.20", "dbIOTFC", "admin", "errata"); //Da portare su file esterno
 
@@ -28,6 +31,12 @@ namespace MQTTServer
             client.StartClient(UID, PWD, "MASTER");
 
             var dBServices = new DBServices(connector);
+
+            var signalr = new SignalRClient("localhost", 5000, "hubs/notifyhub");
+            signalr.RaiseException = true;
+            //signalr.SendMessage("UpdateCompany", new { Company = 1 });
+
+
 
             var actionprovider = new MQTTActionProvider()
                         .AddEndpointAction("esp/get_anagra", endpointdata =>
@@ -59,8 +68,25 @@ namespace MQTTServer
                                 var value = (int)doc.not_synced_delta;
 
                                 dBServices.logDeviceDelta(device.ID_Device, value);
+                                signalr.SendMessage(null, new { Company = location.Value });
 
+                                Console.WriteLine();
+                                Console.WriteLine();
+                                Console.WriteLine();
+                                Console.WriteLine();
+                                Console.WriteLine();
+                                Console.WriteLine();
+
+                                Thread.Sleep(2000);
+
+                                Console.WriteLine("Delta changed on company : " + location.Value + ". Saving...");
+                                Thread.Sleep(200);
+                                Console.WriteLine("Added " + value + " to location " + location.Value);
                                 client.SendMessage("brokr/" + endpointdata.ID + "/reset_delta", "");
+                                Console.WriteLine();
+                                Console.Write("Sending delta reset to device " + device.Mac_Address+ "...");
+                                Thread.Sleep(300);
+                                Console.Write("OK");
 
 
                             }
@@ -78,7 +104,6 @@ namespace MQTTServer
                                 if (anagra != null)
                                 {
                                     //client.SendMessage("brokr/" + endpointdata.ID + "/pcount", JsonConvert.SerializeObject(new { People_Count = anagra.People_Count })); //Informo il sender con la nuova conta 
-
                                     //! Da aggiungere la logica per chiamare tutti i dispositivi associati a quella location !
 
                                 }

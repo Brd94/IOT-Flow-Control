@@ -1,8 +1,73 @@
-passare su mysql + phpmyadmin
-correggere if parentesi
-implementare ssl broker
-user mysql perm
-documentare prot
-caso terremoto
-overleaf mail professore
-istruzioni yaml
+
+
+-CASO REBASE-
+
+Aree operative in ordine di importanza:
+- Back-End
+- Front-End
+- BrokerMQTT
+
+1gg = 4 ore Alex e 4 ore Simone
+
+[ALTERNATIVA 1 - Totale : 60gg]
+
+Back-End : _giorni uomo 30gg_ 
+Tecnologia proposta : [NodeJS]
+Area di autenticazione, ovvero la gestione della persistenza degli utenti all'interno del sistema. Questa è la fase
+più impegnativa poiché bisogna creare un meccanismo capace di rispettare le normative del GDPR (i dati sensibili che
+memorizziamo riguardano i dati del rappresentante delegato della struttura e della struttura stessa).
+Inoltre bisogna apportare delle modifiche al Database e eseguire la migrazione dei servizi attualmente presenti sul 
+server Web; tra questi troviamo le tre aree esposte dagli endpoint delle API.
+-Autenticazione : gestisce lo stato dell'autenticazione dell'utente
+-Recupero e modifica informazioni delle attività e associazione con i dispositivi
+-Recupero e modifica informazioni dei dispositivi e gestione delle chiavi OTP
+Reimplementazione delle classi interne di funzionamento del server WEB.
+
+
+Front-End : _giorni uomo 20gg_+ 
+Tecnologia proposta : [React]
+Implementazione della parte SPA che poi sarà accessibile come un'applicazione tradizionale. Questo prevede l'Implementazione
+delle logiche per lavorare in modo disconnesso, di essere riattivata tramite notifica, e dei servizi che permettono all'utente di iscriversi, 
+inserire nuove attività,verificando formalmente i dati inseriti tramite una validazione lato client e una lato server.
+
+BrokerMQTT : _giorni uomo 10gg_ 
+Tecnologia proposta : [Mosquitto + Node]
+Reimplementazione del broker (attualmente scritto in c#) con 
+
+
+[ALTERNATIVA 2 - 26gg]
+
+Back-End : _giorni uomo 15gg_ 
+Tecnologia proposta : [NodeJS]
+Si implementa un servizio WEB che si occupi di mostrare le attività tramite un API all'applicazione. L'intera procedura di registrazione, 
+inserimento delle attività e associazione dei dispositivi in questa fase vengono fatti da noi per i due clienti iniziali, e verranno 
+implementate a seguito della presentazione (settembre e a seguire).
+
+
+Front-End : _giorni uomo 10gg_ 
+L'applicativo, sempre secondo le logiche definite nell'ALTERNATIVA 1, si occupa di mostrare una mappa su cui sono localizzati dei punti 
+di interesse con le relative persone rilevate. Non vi sono ne meccanismi di login ne di modifica delle attività registrate nel sistema
+
+
+BrokerMQTT: _giorni uomo 1gg_
+Viene conclusa la fase implementativa del vecchio broker e viene utilizzato per far funzionare il sistema in questa fase.
+In seguito, non appena sarà possibile verrà adottata la soluzione descritta nell'ALTERNATIVA 1.
+
+
+PER TUTTE LE ALTERNATIVE E' INOLTRE NECESSARIO CONSIDERARE IL TEMPO NECESSARIO AD ESEGUIRE LE SEGUENTI OPERAZIONI:
+-Test di funzionamento del sensore (attualmente è stato tarato a casa con condizioni fisse in un contesto sperimentale. Manca la prova sul campo.)
+-Test di funzionamento dei microcontrollori per quanto riguarda la connessione ai vari routers e della stabilità del sistema
+-Migrare il sistema in un dominio pubblico, eseguendo tutti i test del caso
+-Una volta che tutte le componenti sono configurate, bisogna lasciarle girare per alcuni giorni per vericare che non ci siano problemi in 
+    fase di presentazione
+
+
+
+------------
+-CASO EXT-
+
+
+
+
+
+------------

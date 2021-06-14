@@ -14,8 +14,8 @@
 
 #define RXD0 3
 #define TXD0 1
-#define PIN_ADD 17
-#define PIN_SUB 5
+#define PIN_ADD 5
+#define PIN_SUB 18
 
 Preferences preferences;
 WiFiClient espClient;
@@ -419,19 +419,21 @@ void loop()
   String stateMessage = "";
 
   if (anagra.id < 0)
-    stateMessage = "! ATTENZIONE !  - Nessuna associazione"; //da modificare
+    stateMessage = "Nessuna associazione"; //da modificare
   else
     stateMessage = anagra.business_name + " - " + anagra.address + "  ";
 
-  int indexStart1Row = (now / 1000) % max((int)stateMessage.length() - 20, 1);
+  int indexStart1Row = (now / 1000) % max(((int)stateMessage.length())- 20, 1);
+
   //Serial.println(indexStart1Row);
 
   char ragSoc[20];
   stateMessage.toCharArray(ragSoc, 20, indexStart1Row);
   u8g2.drawStr(3, 15, ragSoc);
+  //u8g2.drawStr(3, 15, "Nessuna associazione");
 
   //Scrivo il numero delle persone
-  char str[20];
+  char str[20] = {' '};
   if (anagra.pcount_server >= 0)
     sprintf(str, "Persone : %d", anagra.pcount_server);
 
@@ -470,8 +472,8 @@ void loop()
     if (rssi > -50)
       u8g2.drawVLine(108, 2, 8);
 
-    u8g2.drawStr(3, 46, "Per config. digitare");
-    u8g2.drawStr(3, 54, "l'ind.IP sul browser");
+    // u8g2.drawStr(3, 46, "Per config. digitare");
+    // u8g2.drawStr(3, 54, "l'ind.IP sul browser");
 
     //if (anagra.id > 0) //Rispondo ai client dell'interfaccia web solo se l'anagrafica è valida
     //  server.handleClient();
@@ -555,9 +557,13 @@ void loop()
 
   char strsync[25];
 
-  sprintf(strsync, "Da sincronizz. : %d", anagra.not_synced_delta);
+  sprintf(strsync, "Non sincronizz.: %d", anagra.not_synced_delta);
+  //sprintf(strsync, "Non sincronizz.: 0", anagra.not_synced_delta);
 
   u8g2.drawStr(3, 35, strsync);
+  
+  u8g2.drawStr(3, 45, "OTP Key : 4L38RD");
+
 
   //u8g2.drawGlyph(5, 20, 0x2603);
 

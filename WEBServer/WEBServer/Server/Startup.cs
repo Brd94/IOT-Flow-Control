@@ -10,6 +10,7 @@ using WEBServer.Server.Services.Infrastructure;
 using WEBServer.Server.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using WEBServer.Server.Services;
 
 namespace WEBServer.Server
 {
@@ -41,6 +42,9 @@ namespace WEBServer.Server
             services.AddTransient<IMovementsService,ADOMovementsService>();
             services.AddTransient<IDeviceService,ADODeviceService>();
             services.AddTransient<IProbeService, ADOProbeService>();
+            services.AddTransient<IProbeCalculator, ProbeCalculator>();
+
+            services.AddSignalR();
 
             services.ConfigureApplicationCookie(options =>
             {
@@ -86,6 +90,8 @@ namespace WEBServer.Server
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
                 endpoints.MapFallbackToFile("index.html");
+                endpoints.MapHub<NotifyHub>("/hubs/notifyhub");
+
             });
         }
     }
